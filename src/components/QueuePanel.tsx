@@ -1,11 +1,10 @@
 import { QueueTask } from '@/lib/types'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { X, Clock } from '@phosphor-icons/react'
+import { Clock, Info } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { getCropById, getBuildingById } from '@/lib/gameEngine'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface QueuePanelProps {
   queue: QueueTask[]
@@ -20,28 +19,40 @@ export function QueuePanel({ queue, onCancelTask }: QueuePanelProps) {
     if (seconds < 60) return `${seconds}s`
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
-    return `${minutes}m ${remainingSeconds}s`
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
   return (
     <Card className="flex flex-col h-full bg-card/95 backdrop-blur-sm">
       <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Clock weight="fill" className="w-5 h-5 text-primary" />
-          Task Queue ({queue.length})
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Clock weight="fill" className="w-5 h-5 text-primary" />
+            Active Tasks
+          </h3>
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-muted-foreground cursor-help" weight="fill" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>This panel shows your growing crops and building construction. Tasks complete automatically - just wait for them to finish!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
       
       <ScrollArea className="flex-1 p-4">
         {queue.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-            <Clock weight="light" className="w-12 h-12 mb-2 opacity-50" />
-            <p className="text-sm">No tasks in queue</p>
-            <p className="text-xs mt-1">Plant crops or build to add tasks</p>
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-12">
+            <Clock weight="light" className="w-16 h-16 mb-3 opacity-30" />
+            <p className="text-sm font-semibold mb-1">No Active Tasks</p>
+            <p className="text-xs px-4">Plant crops or build structures to see your tasks appear here. They'll complete automatically!</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {queue.map((task, index) => {
+            {queue.map((task) => {
               const remaining = Math.max(0, task.completesAt - now)
               const total = task.completesAt - task.startedAt
               const progress = total > 0 ? ((total - remaining) / total) * 100 : 0
@@ -52,7 +63,7 @@ export function QueuePanel({ queue, onCancelTask }: QueuePanelProps) {
               if (task.type === 'plant' || task.type === 'harvest') {
                 const crop = getCropById(task.targetId)
                 if (crop) {
-                  taskName = `${task.type === 'plant' ? 'Growing' : 'Harvesting'} ${crop.name}`
+                  taskName = `Growing ${crop.name}`
                   taskIcon = crop.icon
                 }
               } else if (task.type === 'build') {
@@ -64,32 +75,22 @@ export function QueuePanel({ queue, onCancelTask }: QueuePanelProps) {
               }
 
               return (
-                <Card key={task.id} className="p-3 bg-muted/50">
+                <Card key={task.id} className="p-4 bg-muted/50 hover:bg-muted/70 transition-colors">
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{taskIcon}</span>
+                    <span className="text-3xl">{taskIcon}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-sm font-medium truncate">{taskName}</span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => onCancelTask(task.id)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <span className="text-sm font-semibold block mb-2">{taskName}</span>
                       
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{task.status === 'processing' ? 'In Progress' : 'Queued'}</span>
-                          {task.status === 'processing' && (
-                            <span>{formatTime(remaining)}</span>
-                          )}
+                      <div className="space-y-2">
+                        <Progress value={progress} className="h-2" />
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {remaining > 0 ? 'Time remaining' : 'Complete!'}
+                          </span>
+                          <span className="font-semibold font-numeric">
+                            {remaining > 0 ? formatTime(remaining) : '✓ Done'}
+                          </span>
                         </div>
-                        {task.status === 'processing' && (
-                          <Progress value={progress} className="h-1.5" />
-                        )}
                       </div>
                     </div>
                   </div>

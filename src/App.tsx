@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { useGameState } from '@/hooks/useGameState'
 import { ResourceBar } from '@/components/ResourceBar'
 import { FarmGrid } from '@/components/FarmGrid'
@@ -6,8 +7,10 @@ import { QueuePanel } from '@/components/QueuePanel'
 import { TechTree } from '@/components/TechTree'
 import { PlacementDialog } from '@/components/PlacementDialog'
 import { AchievementsPanel } from '@/components/AchievementsPanel'
+import { TutorialOverlay } from '@/components/TutorialOverlay'
+import { HelpButton } from '@/components/HelpButton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
 import {
   canAfford,
@@ -33,6 +36,7 @@ function App() {
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null)
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState('farm')
+  const [hasSeenTutorial, setHasSeenTutorial] = useKV<boolean>('tutorial-completed', false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -229,32 +233,43 @@ function App() {
     <div className="min-h-screen bg-background">
       <Toaster position="top-right" />
       
+      {!hasSeenTutorial && (
+        <TutorialOverlay onComplete={() => setHasSeenTutorial(() => true)} />
+      )}
+      
+      <HelpButton />
+      
       <div className="container mx-auto p-4 max-w-7xl">
-        <div className="mb-4">
-          <h1 className="text-4xl font-bold text-center mb-2 text-primary">
+        <div className="mb-6">
+          <h1 className="text-5xl font-bold text-center mb-2 text-primary flex items-center justify-center gap-3">
             🌾 Farm Empire
           </h1>
-          <p className="text-center text-muted-foreground">Grow your agricultural dynasty</p>
+          <p className="text-center text-lg text-muted-foreground">Build the ultimate farming dynasty</p>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-6">
           <ResourceBar resources={gameState.resources} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div>
             <Tabs value={currentTab} onValueChange={setCurrentTab}>
               <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="farm" className="flex items-center gap-2">
-                  <Farm weight="fill" className="w-4 h-4" />
+                <TabsTrigger value="farm" className="flex items-center gap-2 text-base">
+                  <Farm weight="fill" className="w-5 h-5" />
                   Farm
                 </TabsTrigger>
-                <TabsTrigger value="tech" className="flex items-center gap-2">
-                  <TreeStructure weight="fill" className="w-4 h-4" />
+                <TabsTrigger value="tech" className="flex items-center gap-2 text-base relative">
+                  <TreeStructure weight="fill" className="w-5 h-5" />
                   Tech Tree
+                  {availableTechs.length > 0 && (
+                    <Badge variant="default" className="ml-1 px-1.5 py-0 text-xs">
+                      {availableTechs.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="achievements" className="flex items-center gap-2">
-                  <Trophy weight="fill" className="w-4 h-4" />
+                <TabsTrigger value="achievements" className="flex items-center gap-2 text-base">
+                  <Trophy weight="fill" className="w-5 h-5" />
                   Achievements
                 </TabsTrigger>
               </TabsList>
@@ -263,7 +278,7 @@ function App() {
                 <FarmGrid plots={gameState.plots} onPlotClick={handlePlotClick} />
               </TabsContent>
 
-              <TabsContent value="tech" className="mt-0 bg-card rounded-lg border">
+              <TabsContent value="tech" className="mt-0 bg-card rounded-lg border p-4">
                 <TechTree
                   techs={availableTechs}
                   researchPoints={gameState.resources.research}
