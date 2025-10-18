@@ -1,5 +1,5 @@
-import { GameState, Resources, QueueTask, PlotState } from './types'
-import { CROPS, BUILDINGS, TECH_TREE, ACHIEVEMENTS } from './gameData'
+import { GameState, Resources, PlotState, ActivityLogEntry } from './types'
+import { CROPS, BUILDINGS, TECH_TREE, ACHIEVEMENTS, ANIMALS } from './gameData'
 
 export function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
   return Object.entries(cost).every(([key, value]) => {
@@ -27,6 +27,10 @@ export function getCropById(id: string) {
   return CROPS.find(c => c.id === id)
 }
 
+export function getAnimalById(id: string) {
+  return ANIMALS.find(a => a.id === id)
+}
+
 export function getBuildingById(id: string) {
   return BUILDINGS.find(b => b.id === id)
 }
@@ -46,6 +50,13 @@ export function getUnlockedCrops(techs: string[]) {
   })).filter(c => c.unlocked)
 }
 
+export function getUnlockedAnimals(techs: string[]) {
+  return ANIMALS.map(animal => ({
+    ...animal,
+    unlocked: !animal.requiredTech || techs.includes(animal.requiredTech)
+  })).filter(a => a.unlocked)
+}
+
 export function getUnlockedBuildings(techs: string[]) {
   return BUILDINGS.map(building => ({
     ...building,
@@ -62,7 +73,7 @@ export function getAvailableTechs(purchasedTechs: string[]) {
       unlocked: prereqsMet && !alreadyPurchased,
       purchased: alreadyPurchased,
     }
-  })
+  }).filter(t => t.unlocked || t.purchased)
 }
 
 export function applyTechEffects(state: GameState): GameState {
@@ -70,22 +81,38 @@ export function applyTechEffects(state: GameState): GameState {
   let yieldMultiplier = 1
   let waterCostMultiplier = 1
   let energyProductionMultiplier = 1
+  let fertilizerEfficiency = 1
+  let animalProduction = 1
+  let animalYield = 1
+  let cropRotation = 1
   let masterMultiplier = 1
 
   state.techs.forEach(techId => {
     const tech = getTechById(techId)
     if (!tech) return
 
-    if (tech.effect.startsWith('growth_speed_')) {
-      growthMultiplier *= parseFloat(tech.effect.split('_')[2])
-    } else if (tech.effect.startsWith('yield_multiplier_')) {
-      yieldMultiplier *= parseFloat(tech.effect.split('_')[2])
-    } else if (tech.effect.startsWith('water_cost_')) {
-      waterCostMultiplier *= parseFloat(tech.effect.split('_')[2])
-    } else if (tech.effect.startsWith('energy_production_')) {
-      energyProductionMultiplier *= parseFloat(tech.effect.split('_')[2])
-    } else if (tech.effect.startsWith('master_multiplier_')) {
-      masterMultiplier *= parseFloat(tech.effect.split('_')[2])
+    const effectParts = tech.effect.split('_')
+    const lastPart = effectParts[effectParts.length - 1]
+    const multiplier = parseFloat(lastPart)
+
+    if (tech.effect.startsWith('growth_speed_') && !isNaN(multiplier)) {
+      growthMultiplier *= multiplier
+    } else if (tech.effect.startsWith('yield_multiplier_') && !isNaN(multiplier)) {
+      yieldMultiplier *= multiplier
+    } else if (tech.effect.startsWith('water_cost_') && !isNaN(multiplier)) {
+      waterCostMultiplier *= multiplier
+    } else if (tech.effect.startsWith('energy_production_') && !isNaN(multiplier)) {
+      energyProductionMultiplier *= multiplier
+    } else if (tech.effect.startsWith('fertilizer_efficiency_') && !isNaN(multiplier)) {
+      fertilizerEfficiency *= multiplier
+    } else if (tech.effect.startsWith('animal_production_') && !isNaN(multiplier)) {
+      animalProduction *= multiplier
+    } else if (tech.effect.startsWith('animal_yield_') && !isNaN(multiplier)) {
+      animalYield *= multiplier
+    } else if (tech.effect.startsWith('crop_rotation_') && !isNaN(multiplier)) {
+      cropRotation *= multiplier
+    } else if (tech.effect.startsWith('master_multiplier_') && !isNaN(multiplier)) {
+      masterMultiplier *= multiplier
     }
   })
 
@@ -95,15 +122,18 @@ export function applyTechEffects(state: GameState): GameState {
     ...state,
     _modifiers: {
       growthMultiplier: growthMultiplier * totalMultiplier,
-      yieldMultiplier: yieldMultiplier * totalMultiplier * state.prestigeMultiplier,
+      yieldMultiplier: yieldMultiplier * cropRotation * totalMultiplier * state.prestigeMultiplier,
       waterCostMultiplier,
       energyProductionMultiplier: energyProductionMultiplier * totalMultiplier,
+      fertilizerEfficiency: fertilizerEfficiency * totalMultiplier,
+      animalProduction: animalProduction * totalMultiplier,
+      animalYield: animalYield * totalMultiplier,
     }
   } as any
 }
 
 export function calculateGrowTime(baseTime: number, modifiers: any): number {
-  return baseTime / (modifiers?.growthMultiplier || 1)
+  return Math.floor(baseTime / (modifiers?.growthMultiplier || 1))
 }
 
 export function calculateYield(baseYield: Partial<Resources>, modifiers: any): Partial<Resources> {
@@ -120,7 +150,23 @@ export function calculateCost(baseCost: Partial<Resources>, modifiers: any): Par
   if (result.water && modifiers?.waterCostMultiplier) {
     result.water = Math.ceil(result.water * modifiers.waterCostMultiplier)
   }
+  if (result.fertilizer && modifiers?.fertilizerEfficiency) {
+    result.fertilizer = Math.ceil(result.fertilizer / modifiers.fertilizerEfficiency)
+  }
   return result
+}
+
+export function calculateAnimalProduction(baseProduction: Partial<Resources>, modifiers: any): Partial<Resources> {
+  const multiplier = (modifiers?.animalYield || 1)
+  const result: Partial<Resources> = {}
+  Object.entries(baseProduction).forEach(([key, value]) => {
+    result[key as keyof Resources] = Math.floor((value || 0) * multiplier)
+  })
+  return result
+}
+
+export function calculateAnimalProductionInterval(baseInterval: number, modifiers: any): number {
+  return Math.floor(baseInterval / (modifiers?.animalProduction || 1))
 }
 
 export function processQueue(state: GameState): GameState {
@@ -172,6 +218,7 @@ export function processQueue(state: GameState): GameState {
 export function checkAchievements(state: GameState): GameState {
   let newState = { ...state }
   let resourcesGained: Partial<Resources> = {}
+  let newAchievements: string[] = []
 
   ACHIEVEMENTS.forEach(achievement => {
     if (newState.achievements.includes(achievement.id)) return
@@ -188,15 +235,17 @@ export function checkAchievements(state: GameState): GameState {
       case 'tech':
         currentProgress = newState.techs.length
         break
+      case 'animals':
+        currentProgress = newState.plots.filter(p => p.type === 'animal').length
+        break
+      case 'production':
+        currentProgress = newState.totalAnimalProducts
+        break
       case 'automation':
-        if (achievement.id === 'automation_first') {
-          currentProgress = newState.plots.filter(p => 
-            p.type === 'building' && p.buildingId && 
-            ['windmill', 'compost', 'seed_maker', 'auto_harvester'].includes(p.buildingId)
-          ).length
-        } else if (achievement.id === 'queue_master') {
-          currentProgress = newState.queue.length
-        }
+        currentProgress = newState.plots.filter(p => 
+          p.type === 'building' && p.buildingId && 
+          ['windmill', 'compost', 'seed_maker', 'auto_harvester', 'well', 'research_lab', 'solar_panel'].includes(p.buildingId)
+        ).length
         break
       case 'special':
         if (achievement.id === 'diverse_farm') {
@@ -204,14 +253,20 @@ export function checkAchievements(state: GameState): GameState {
             newState.plots.filter(p => p.cropId).map(p => p.cropId)
           )
           currentProgress = uniqueCrops.size
-        } else if (achievement.id === 'prestige_ready') {
-          currentProgress = newState.totalGoldEarned
+        } else if (achievement.id === 'diverse_ranch') {
+          const uniqueAnimals = new Set(
+            newState.plots.filter(p => p.animalId).map(p => p.animalId)
+          )
+          currentProgress = uniqueAnimals.size
+        } else if (achievement.id === 'empire_builder') {
+          currentProgress = newState.plots.filter(p => p.type === 'building').length
         }
         break
     }
 
     if (currentProgress >= achievement.requirement) {
       newState.achievements.push(achievement.id)
+      newAchievements.push(achievement.id)
       resourcesGained = addResources(resourcesGained as Resources, achievement.reward)
     }
   })
@@ -221,4 +276,24 @@ export function checkAchievements(state: GameState): GameState {
   }
 
   return newState
+}
+
+export function addActivityLog(state: GameState, entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>): GameState {
+  const newEntry: ActivityLogEntry = {
+    ...entry,
+    id: `log-${Date.now()}-${Math.random()}`,
+    timestamp: Date.now(),
+  }
+  
+  return {
+    ...state,
+    activityLog: [newEntry, ...state.activityLog].slice(0, 200),
+  }
+}
+
+export function formatResourceGain(resources: Partial<Resources>): string {
+  return Object.entries(resources)
+    .filter(([_, v]) => v && v > 0)
+    .map(([k, v]) => `${v} ${k}`)
+    .join(', ')
 }

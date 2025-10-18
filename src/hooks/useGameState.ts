@@ -4,7 +4,7 @@ import { INITIAL_RESOURCES } from '@/lib/gameData'
 
 const INITIAL_GAME_STATE: GameState = {
   resources: INITIAL_RESOURCES,
-  plots: Array.from({ length: 16 }, (_, i) => ({
+  plots: Array.from({ length: 20 }, (_, i) => ({
     id: `plot-${i}`,
     type: 'empty' as const,
     level: 1,
@@ -12,8 +12,10 @@ const INITIAL_GAME_STATE: GameState = {
   queue: [],
   techs: [],
   achievements: [],
+  activityLog: [],
   totalHarvested: 0,
   totalGoldEarned: 0,
+  totalAnimalProducts: 0,
   prestigeLevel: 0,
   prestigeMultiplier: 1,
   startTime: Date.now(),

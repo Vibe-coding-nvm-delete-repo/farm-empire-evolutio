@@ -1,8 +1,9 @@
 import { Tech } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Lock, Check, Flask, Info } from '@phosphor-icons/react'
+import { Check, Flask } from '@phosphor-icons/react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface TechTreeProps {
@@ -11,20 +12,24 @@ interface TechTreeProps {
   onPurchase: (techId: string) => void
 }
 
-const CATEGORY_COLORS = {
-  crops: 'bg-primary/10 border-primary text-primary',
-  automation: 'bg-purple-500/10 border-purple-500 text-purple-500',
-  buildings: 'bg-secondary/10 border-secondary text-secondary',
-  efficiency: 'bg-blue-500/10 border-blue-500 text-blue-500',
-  exotic: 'bg-accent/10 border-accent text-accent-foreground',
+const CATEGORY_COLORS: Record<string, string> = {
+  crops: 'bg-green-500/10 border-green-500/30 text-green-600',
+  animals: 'bg-amber-500/10 border-amber-500/30 text-amber-600',
+  automation: 'bg-purple-500/10 border-purple-500/30 text-purple-600',
+  buildings: 'bg-blue-500/10 border-blue-500/30 text-blue-600',
+  efficiency: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600',
+  processing: 'bg-pink-500/10 border-pink-500/30 text-pink-600',
+  exotic: 'bg-amber-500/10 border-amber-500/30 text-amber-600',
 }
 
-const CATEGORY_DESCRIPTIONS = {
-  crops: 'Unlock new crop varieties to diversify your farm',
-  automation: 'Advanced automation technologies for hands-free farming',
-  buildings: 'Structures that produce resources automatically',
-  efficiency: 'Improve your farm\'s productivity and reduce costs',
-  exotic: 'Rare and powerful late-game technologies',
+const CATEGORY_ICONS: Record<string, string> = {
+  crops: '🌾',
+  animals: '🐄',
+  automation: '🤖',
+  buildings: '🏗️',
+  efficiency: '⚡',
+  processing: '🏭',
+  exotic: '💎',
 }
 
 export function TechTree({ techs, researchPoints, onPurchase }: TechTreeProps) {
@@ -34,123 +39,125 @@ export function TechTree({ techs, researchPoints, onPurchase }: TechTreeProps) {
     return acc
   }, {} as Record<string, Tech[]>)
 
-  return (
-    <ScrollArea className="h-[550px]">
-      <TooltipProvider>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Technology Tree</h2>
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-lg border border-purple-500 cursor-help">
-                  <Flask weight="fill" className="w-5 h-5 text-purple-500" />
-                  <span className="font-semibold font-numeric text-lg">{researchPoints}</span>
-                  <span className="text-sm text-muted-foreground">Research</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Earn Research Points by harvesting special crops like Tomatoes or building Research Labs</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+  const sortedCategories = Object.keys(groupedTechs).sort()
 
-          {Object.entries(groupedTechs).map(([category, categoryTechs]) => (
-            <div key={category} className="space-y-3">
-              <div className="flex items-center gap-2">
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Technology Tree</h2>
+        <div className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 rounded-lg border border-purple-500/30">
+          <Flask weight="fill" className="w-4 h-4 text-purple-500" />
+          <span className="font-semibold font-numeric">{researchPoints}</span>
+          <span className="text-sm text-muted-foreground">Research Points</span>
+        </div>
+      </div>
+
+      <ScrollArea className="h-[520px]">
+        <div className="space-y-4 pr-4">
+          {sortedCategories.map((category) => (
+            <div key={category}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">{CATEGORY_ICONS[category]}</span>
                 <h3 className="text-lg font-semibold capitalize">{category}</h3>
-                <Tooltip delayDuration={300}>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" weight="fill" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{CATEGORY_DESCRIPTIONS[category as keyof typeof CATEGORY_DESCRIPTIONS]}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <Badge variant="secondary" className="ml-auto">
+                  {groupedTechs[category].length}
+                </Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {categoryTechs.map((tech) => {
+              
+              <div className="space-y-2">
+                {groupedTechs[category].map((tech) => {
                   const canAfford = researchPoints >= tech.cost
-                  const isAvailable = tech.unlocked && !tech.purchased
+                  const isPurchased = tech.purchased
                   
                   return (
-                    <Tooltip key={tech.id} delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <Card
-                          className={`
-                            p-4 transition-all duration-200
-                            ${tech.purchased ? 'bg-muted border-primary/30' : ''}
-                            ${isAvailable && canAfford ? 'border-primary cursor-pointer hover:shadow-lg hover:scale-[1.02]' : ''}
-                            ${isAvailable && !canAfford ? 'border-destructive/30 cursor-not-allowed opacity-75' : ''}
-                            ${!tech.purchased && !isAvailable ? 'opacity-40 cursor-not-allowed' : ''}
-                          `}
-                          onClick={() => isAvailable && canAfford && onPurchase(tech.id)}
-                        >
-                          <div className="space-y-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1">
-                                <h4 className="font-semibold mb-1">{tech.name}</h4>
-                                <p className="text-sm text-muted-foreground">{tech.description}</p>
+                    <TooltipProvider key={tech.id}>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <Card
+                            className={`p-3 transition-all ${
+                              isPurchased
+                                ? 'bg-card/50 opacity-60'
+                                : canAfford
+                                ? 'border-primary/50 hover:border-primary hover:shadow-md cursor-pointer'
+                                : 'opacity-50'
+                            }`}
+                            onClick={() => {
+                              if (canAfford && !isPurchased) {
+                                onPurchase(tech.id)
+                              }
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${CATEGORY_COLORS[tech.category]} flex items-center justify-center border`}>
+                                {isPurchased ? (
+                                  <Check className="w-5 h-5" weight="bold" />
+                                ) : (
+                                  <span className="text-lg">{CATEGORY_ICONS[tech.category]}</span>
+                                )}
                               </div>
-                              {tech.purchased ? (
-                                <Check weight="bold" className="w-5 h-5 text-primary shrink-0" />
-                              ) : !isAvailable ? (
-                                <Lock weight="fill" className="w-5 h-5 text-muted-foreground shrink-0" />
-                              ) : null}
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <Badge variant="outline" className={CATEGORY_COLORS[tech.category]}>
-                                {category}
-                              </Badge>
                               
-                              {!tech.purchased && (
-                                <div className="flex items-center gap-1">
-                                  <Flask weight="fill" className="w-4 h-4 text-purple-500" />
-                                  <span className={`text-sm font-semibold ${canAfford ? 'text-purple-500' : 'text-destructive'}`}>
-                                    {tech.cost}
-                                  </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-semibold text-sm">{tech.name}</h4>
+                                  {isPurchased && (
+                                    <Badge variant="secondary" className="text-xs">Unlocked</Badge>
+                                  )}
                                 </div>
+                                <p className="text-xs text-muted-foreground mb-2">{tech.description}</p>
+                                
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={canAfford ? "default" : "destructive"} className="text-xs">
+                                    <Flask className="w-3 h-3 mr-1" weight="fill" />
+                                    {tech.cost}
+                                  </Badge>
+                                  
+                                  <Badge variant="outline" className="text-xs">
+                                    Tier {tech.tier}
+                                  </Badge>
+                                  
+                                  {tech.prerequisites.length > 0 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Requires {tech.prerequisites.length} tech
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {!isPurchased && canAfford && (
+                                <Button size="sm" className="flex-shrink-0">
+                                  Unlock
+                                </Button>
                               )}
                             </div>
-
-                            {tech.prerequisites.length > 0 && !tech.purchased && (
-                              <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                                <strong>Requires:</strong> {tech.prerequisites.map(id => {
-                                  const prereq = techs.find(t => t.id === id)
-                                  return prereq?.name || id
-                                }).join(', ')}
-                              </div>
+                          </Card>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-sm">
+                          <div className="space-y-1">
+                            <p className="font-semibold">{tech.name}</p>
+                            <p className="text-xs">{tech.description}</p>
+                            {tech.prerequisites.length > 0 && (
+                              <p className="text-xs text-muted-foreground pt-1">
+                                Prerequisites: {tech.prerequisites.length} technologies
+                              </p>
                             )}
                           </div>
-                        </Card>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="max-w-sm">
-                        <p className="font-semibold mb-1">{tech.name}</p>
-                        <p className="text-sm mb-2">{tech.description}</p>
-                        {!tech.purchased && !isAvailable && tech.prerequisites.length > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            🔒 Unlock {tech.prerequisites.map(id => techs.find(t => t.id === id)?.name).join(' and ')} first
-                          </p>
-                        )}
-                        {!tech.purchased && isAvailable && !canAfford && (
-                          <p className="text-xs text-destructive">
-                            ⚠️ Need {tech.cost - researchPoints} more Research Points
-                          </p>
-                        )}
-                        {!tech.purchased && isAvailable && canAfford && (
-                          <p className="text-xs text-primary font-semibold">
-                            ✨ Click to unlock!
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )
                 })}
               </div>
             </div>
           ))}
+          
+          {sortedCategories.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-sm">No technologies available</p>
+              <p className="text-xs mt-1">Keep playing to unlock more!</p>
+            </div>
+          )}
         </div>
-      </TooltipProvider>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   )
 }

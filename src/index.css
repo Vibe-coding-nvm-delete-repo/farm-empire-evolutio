@@ -8,32 +8,32 @@
 }
 
 :root {
-  --background: oklch(0.97 0.01 90);
-  --foreground: oklch(0.25 0.02 60);
+  --background: oklch(0.98 0.005 90);
+  --foreground: oklch(0.20 0.02 60);
 
-  --card: oklch(0.99 0 0);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.20 0.02 60);
-  --popover: oklch(0.99 0 0);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.20 0.02 60);
 
-  --primary: oklch(0.70 0.15 145);
+  --primary: oklch(0.65 0.18 145);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.45 0.08 60);
+  --secondary: oklch(0.42 0.08 60);
   --secondary-foreground: oklch(0.99 0 0);
-  --accent: oklch(0.82 0.15 90);
-  --accent-foreground: oklch(0.25 0.02 60);
+  --accent: oklch(0.80 0.12 90);
+  --accent-foreground: oklch(0.22 0.02 60);
   
-  --muted: oklch(0.92 0.03 145);
-  --muted-foreground: oklch(0.45 0.05 145);
+  --muted: oklch(0.94 0.02 145);
+  --muted-foreground: oklch(0.48 0.04 145);
   
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.88 0.02 145);
-  --input: oklch(0.88 0.02 145);
-  --ring: oklch(0.70 0.15 145);
+  --border: oklch(0.90 0.01 145);
+  --input: oklch(0.90 0.01 145);
+  --ring: oklch(0.65 0.18 145);
 
-  --radius: 0.75rem;
+  --radius: 0.65rem;
 }
 
 @theme {
@@ -73,48 +73,19 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Fredoka', sans-serif;
 }
 
+.font-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes sway {
   0%, 100% {
-    transform: rotate(-1deg);
+    transform: rotate(-0.5deg);
   }
   50% {
-    transform: rotate(1deg);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(112, 200, 100, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(112, 200, 100, 0.6);
-  }
-}
-
-@keyframes harvest-bounce {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(0);
+    transform: rotate(0.5deg);
   }
 }
 
 .animate-sway {
   animation: sway 3s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-harvest-bounce {
-  animation: harvest-bounce 0.5s ease-out forwards;
-}
-
-.font-numeric {
-  font-variant-numeric: tabular-nums;
 }
