@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks'
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { GameState, PlotState } from '@/lib/types'
 import { INITIAL_RESOURCES } from '@/lib/gameData'
 
@@ -64,17 +64,56 @@ function validateGameState(state: any): GameState {
 }
 
 export function useGameState() {
-  const [state, setStateRaw, deleteState] = useKV<GameState>('game-state', INITIAL_GAME_STATE)
+  const [persistedState, setPersistedState, deleteState] = useKV<GameState>('game-state', INITIAL_GAME_STATE)
+  const [localState, setLocalState] = useState<GameState>(() => validateGameState(persistedState))
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const lastSaveRef = useRef<string>('')
   
-  const validatedState = validateGameState(state)
+  useEffect(() => {
+    setLocalState(validateGameState(persistedState))
+  }, [])
   
   const setState = useCallback((updater: GameState | ((prev: GameState) => GameState)) => {
-    setStateRaw((prevState) => {
-      const prev = validateGameState(prevState)
-      const next = typeof updater === 'function' ? updater(prev) : updater
-      return validateGameState(next)
+    setLocalState((prevState) => {
+      const next = typeof updater === 'function' ? updater(prevState) : updater
+      const validated = validateGameState(next)
+      
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+      
+      saveTimerRef.current = setTimeout(() => {
+        const stateStr = JSON.stringify(validated)
+        if (stateStr !== lastSaveRef.current) {
+          lastSaveRef.current = stateStr
+          setPersistedState(validated)
+        }
+      }, 2000)
+      
+      return validated
     })
-  }, [setStateRaw])
+  }, [setPersistedState])
   
-  return [validatedState, setState, deleteState] as const
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      const stateStr = JSON.stringify(localState)
+      if (stateStr !== lastSaveRef.current) {
+        lastSaveRef.current = stateStr
+        setPersistedState(localState)
+      }
+    }, 5000)
+    
+    return () => {
+      clearInterval(saveInterval)
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+      const stateStr = JSON.stringify(localState)
+      if (stateStr !== lastSaveRef.current) {
+        setPersistedState(localState)
+      }
+    }
+  }, [localState, setPersistedState])
+  
+  return [localState, setState, deleteState] as const
 }
