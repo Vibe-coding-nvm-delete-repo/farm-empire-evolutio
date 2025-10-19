@@ -11,7 +11,10 @@ export function canAfford(resources: Resources, cost: Partial<Resources>): boole
 export function deductResources(resources: Resources, cost: Partial<Resources>): Resources {
   const newResources = { ...resources }
   Object.entries(cost).forEach(([key, value]) => {
-    newResources[key as keyof Resources] -= value || 0
+    const amount = value || 0
+    if (!isNaN(amount) && isFinite(amount)) {
+      newResources[key as keyof Resources] = Math.max(0, newResources[key as keyof Resources] - amount)
+    }
   })
   return newResources
 }
@@ -19,7 +22,13 @@ export function deductResources(resources: Resources, cost: Partial<Resources>):
 export function addResources(resources: Resources, gain: Partial<Resources>): Resources {
   const newResources = { ...resources }
   Object.entries(gain).forEach(([key, value]) => {
-    newResources[key as keyof Resources] += value || 0
+    const amount = value || 0
+    if (!isNaN(amount) && isFinite(amount)) {
+      const currentValue = newResources[key as keyof Resources]
+      if (!isNaN(currentValue) && isFinite(currentValue)) {
+        newResources[key as keyof Resources] = currentValue + amount
+      }
+    }
   })
   return newResources
 }

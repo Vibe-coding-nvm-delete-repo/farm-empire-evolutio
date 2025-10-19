@@ -69,7 +69,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setGameState((current) => {
-        if (!current) return gameState
+        if (!current || !current.resources || !current.plots) return current
         
         const now = Date.now()
         let hasChanges = false
