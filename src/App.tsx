@@ -34,6 +34,7 @@ import {
   checkAchievements,
   calculateGrowTime,
   calculateCost,
+  calculateYield,
   calculateAnimalProduction,
   calculateAnimalProductionInterval,
   addActivityLog,
@@ -48,6 +49,7 @@ import { useKV } from '@github/spark/hooks'
 function App() {
   const [gameState, setGameState] = useGameState()
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null)
+  const [bulkPlantRowIndex, setBulkPlantRowIndex] = useState<number | null>(null)
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState('farm')
   const [hasSeenTutorial, setHasSeenTutorial] = useKV<boolean>('tutorial-completed', false)
@@ -246,8 +248,6 @@ function App() {
   }, [gameState, modifiers, setGameState, setHarvestRoll, setSelectedPlotId, setPlacementDialogOpen])
 
   const handlePlaceCrop = useCallback((cropId: string) => {
-    if (!selectedPlotId) return
-
     const crop = getCropById(cropId)
     if (!crop) return
 
@@ -255,8 +255,24 @@ function App() {
     const cost = calculateCost(crop.cost, modifiers)
     const growTime = calculateGrowTime(crop.growTime, modifiers)
 
-    if (!canAfford(gameState.resources, cost)) {
-      toast.error('Not enough resources!')
+    let plotIds: string[] = []
+    
+    if (bulkPlantRowIndex !== null) {
+      const rowPlots = gameState.plots.slice(bulkPlantRowIndex * 5, (bulkPlantRowIndex + 1) * 5)
+      plotIds = rowPlots.filter(p => p.type === 'empty').map(p => p.id)
+    } else if (selectedPlotId) {
+      plotIds = [selectedPlotId]
+    }
+
+    if (plotIds.length === 0) return
+
+    const totalCost: Partial<import('@/lib/types').Resources> = {}
+    Object.entries(cost).forEach(([key, value]) => {
+      totalCost[key as keyof import('@/lib/types').Resources] = (value || 0) * plotIds.length
+    })
+
+    if (!canAfford(gameState.resources, totalCost)) {
+      toast.error(`Not enough resources! Need: ${formatResourceGain(totalCost)}`)
       return
     }
 
@@ -268,9 +284,9 @@ function App() {
 
       let updated = {
         ...current,
-        resources: deductResources(current.resources, cost),
+        resources: deductResources(current.resources, totalCost),
         plots: current.plots.map(p =>
-          p.id === selectedPlotId
+          plotIds.includes(p.id)
             ? { ...p, type: 'crop' as const, cropId, plantedAt: now, completesAt }
             : p
         ),
@@ -278,17 +294,25 @@ function App() {
       
       updated = addActivityLog(updated, {
         type: 'plant',
-        message: `Planted ${crop.name}`,
+        message: plotIds.length > 1 
+          ? `Planted ${plotIds.length}x ${crop.name}`
+          : `Planted ${crop.name}`,
         icon: crop.icon,
       })
       
       return updated
     })
 
-    toast.success(`Planted ${crop.name}!`, { duration: 1500 })
+    toast.success(plotIds.length > 1 
+      ? `Planted ${plotIds.length}x ${crop.name}!`
+      : `Planted ${crop.name}!`, 
+      { duration: 1500 }
+    )
+    
     setSelectedPlotId(null)
+    setBulkPlantRowIndex(null)
     setPlacementDialogOpen(false)
-  }, [selectedPlotId, gameState, modifiers, setGameState, setSelectedPlotId, setPlacementDialogOpen])
+  }, [bulkPlantRowIndex, selectedPlotId, gameState, setGameState])
 
   const handlePlaceAnimal = useCallback((animalId: string) => {
     if (!selectedPlotId) return
@@ -414,6 +438,72 @@ function App() {
     })
     toast.info('Task cancelled', { duration: 1000 })
   }, [gameState, setGameState])
+
+  const handleCollectAll = useCallback(() => {
+    const readyPlots = gameState.plots.filter(
+      p => p.type === 'crop' && p.completesAt && p.completesAt <= Date.now()
+    )
+
+    if (readyPlots.length === 0) return
+
+    let totalGold = 0
+    let totalYields: Partial<import('@/lib/types').Resources> = {}
+    let criticals = 0
+
+    setGameState(current => {
+      if (!current) return gameState
+
+      const modifiers = (applyTechEffects(current) as any)._modifiers
+      let updated = { ...current }
+
+      readyPlots.forEach(plot => {
+        const crop = getCropById(plot.cropId!)
+        if (!crop) return
+
+        const baseYield = calculateYield(crop.yield, modifiers)
+        const harvestBonus = rollHarvestBonus(current.luckLevel)
+        const finalYield = applyHarvestBonus(baseYield, harvestBonus)
+
+        if (harvestBonus.isCritical) criticals++
+        totalGold += finalYield.gold || 0
+
+        Object.entries(finalYield).forEach(([key, value]) => {
+          totalYields[key as keyof import('@/lib/types').Resources] = 
+            (totalYields[key as keyof import('@/lib/types').Resources] || 0) + (value || 0)
+        })
+
+        updated.resources = addResources(updated.resources, finalYield)
+      })
+
+      updated.totalHarvested += readyPlots.length
+      updated.totalGoldEarned += totalGold
+      updated.criticalHarvestCount += criticals
+      updated.plots = updated.plots.map(p => 
+        readyPlots.some(rp => rp.id === p.id)
+          ? { ...p, type: 'empty' as const, cropId: undefined, plantedAt: undefined, completesAt: undefined }
+          : p
+      )
+
+      updated = addActivityLog(updated, {
+        type: 'harvest',
+        message: `Bulk harvested ${readyPlots.length} crops${criticals > 0 ? ` (${criticals} criticals!)` : ''}`,
+        resources: totalYields,
+        icon: '🌾',
+      })
+
+      return checkAchievements(updated)
+    })
+
+    toast.success(`Collected ${readyPlots.length} crops!`, {
+      description: `${criticals > 0 ? `🎉 ${criticals} Critical! ` : ''}${formatResourceGain(totalYields)}`,
+      duration: 2500,
+    })
+  }, [gameState, setGameState])
+
+  const handleBulkPlantRow = useCallback((rowIndex: number) => {
+    setBulkPlantRowIndex(rowIndex)
+    setPlacementDialogOpen(true)
+  }, [])
 
   const unlockedCrops = useMemo(() => getUnlockedCrops(gameState.techs), [gameState.techs])
   const unlockedAnimals = useMemo(() => getUnlockedAnimals(gameState.techs), [gameState.techs])
@@ -559,7 +649,12 @@ function App() {
               </TabsList>
 
               <TabsContent value="farm" className="mt-0">
-                <FarmGrid plots={gameState.plots} onPlotClick={handlePlotClick} />
+                <FarmGrid 
+                  plots={gameState.plots} 
+                  onPlotClick={handlePlotClick}
+                  onCollectAll={handleCollectAll}
+                  onBulkPlantRow={handleBulkPlantRow}
+                />
               </TabsContent>
 
               <TabsContent value="tech" className="mt-0 bg-card rounded-lg border p-4">
@@ -603,6 +698,7 @@ function App() {
         onClose={() => {
           setPlacementDialogOpen(false)
           setSelectedPlotId(null)
+          setBulkPlantRowIndex(null)
         }}
         crops={unlockedCrops}
         animals={unlockedAnimals}
@@ -614,15 +710,6 @@ function App() {
       />
     </div>
   )
-}
-
-function calculateYield(baseYield: Partial<import('@/lib/types').Resources>, modifiers: any) {
-  const multiplier = modifiers?.yieldMultiplier || 1
-  const result: Partial<import('@/lib/types').Resources> = {}
-  Object.entries(baseYield).forEach(([key, value]) => {
-    result[key as keyof import('@/lib/types').Resources] = Math.floor((value || 0) * multiplier)
-  })
-  return result
 }
 
 export default App

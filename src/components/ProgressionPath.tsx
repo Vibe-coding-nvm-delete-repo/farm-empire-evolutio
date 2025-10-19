@@ -32,7 +32,7 @@ const MILESTONES: Milestone[] = [
     description: 'Unlock your first technology',
     icon: '🔬',
     requirement: (gs) => gs.techs.length >= 1,
-    hint: 'Earn research from crops, then visit Tech tab',
+    hint: 'Harvest Tomatoes or unlock Root Crops in Tech',
     tier: 1,
   },
   {

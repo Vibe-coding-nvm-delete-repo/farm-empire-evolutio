@@ -1,53 +1,39 @@
 # Farm Empire - Product Requirements Document
 
-Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 36 technologies, and 30 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead. A dice-roll harvest system adds exciting variance to every crop harvest, with luck upgrades that make critical yields more common.
+Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 36 technologies, and 30 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead. A dice-roll harvest system adds exciting variance to every crop harvest, with luck upgrades that make critical yields more common. Bulk actions streamline farm management with collect all and row planting features.
 
 **Performance**: Heavily optimized with memoization, change detection, and comprehensive test coverage (47 unit tests) ensuring snappy 60 FPS gameplay even with 20 active plots.
 
 **Experience Qualities**:
-1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, progression path, and complete resource center guide.
-2. **Maximally Rewarding & Addictive** - Constant progression with dice-roll harvest excitement, critical harvest celebrations, instant feedback, stunning achievement popups, and luck-based variance that keeps every harvest thrilling.
+1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, progression path with hints on how to progress, and complete resource center guide. Clear explanations for earning research points.
+2. **Maximally Rewarding & Addictive** - Constant progression with dice-roll harvest excitement, critical harvest celebrations, instant feedback, stunning achievement popups, and luck-based variance that keeps every harvest thrilling. Bulk actions for efficiency.
 3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), luck upgrades (critical harvests), and progression (research). Enhanced tech tree with category/tier views.
 
 **Complexity Level**: Complex Application (advanced functionality with full progression system)
-  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Dice-roll harvest mechanics with luck progression, comprehensive resource center, sticky resource bar, real-time production, and interconnected reward systems that keep players engaged. Performance-optimized for smooth 60 FPS gameplay.
+  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Dice-roll harvest mechanics with luck progression, comprehensive resource center, sticky resource bar, real-time production with visible progress bars, bulk harvest/planting features, and interconnected reward systems that keep players engaged. Performance-optimized for smooth 60 FPS gameplay.
 
 ## Essential Features
 
-### Dice-Roll Harvest System (NEW!)
-- **Functionality**: Every crop harvest rolls a dice (75-150% normal, 150-200% critical) to determine yield multiplier with exciting animations
-- **Purpose**: Add thrilling variance and "one more harvest" addictive element to gameplay
-- **Trigger**: Click ready crop → Dice rolls automatically → Animated number displays → Yield calculated → Resources awarded
-- **Progression**: Base harvests (75-150%) → Unlock Luck techs → Higher critical chance → More consistent big yields
-- **Success criteria**: Dramatic roll animations for criticals, satisfying normal rolls, clear percentage display, luck progression feels meaningful
+### Bulk Actions (NEW!)
+- **Functionality**: Collect all ready crops with one click, bulk plant entire rows at once with row buttons
+- **Purpose**: Streamline repetitive actions and make farm management more efficient
+- **Trigger**: Ready crops → "Collect All" button appears → Click to harvest everything at once → Resources tallied and awarded. Empty row → Click row button → Select crop → All empty plots in row planted
+- **Progression**: Manual clicking → Bulk harvest unlocked → Bulk row planting → Efficient farm management
+- **Success criteria**: Clear button visibility, satisfying bulk animations, accurate resource calculations, critical rolls counted, row indicators visible
 
-### Luck Progression System (NEW!)
-- **Functionality**: Three luck technologies (Lucky Harvest, Fortune Farming, Golden Touch) that increase critical harvest chance and improve roll ranges
-- **Purpose**: Create long-term progression goal focused on maximizing harvest variance
-- **Trigger**: Unlock techs → Critical chance increases by 2% per level → Roll ranges improve → Track critical harvest achievements
-- **Progression**: 10% base critical → 12% (Tier 2) → 14% (Tier 3) → 16% (Tier 4) → Consistent amazing yields
-- **Success criteria**: Clear luck stats visible, critical harvests feel special, progression feels impactful, achievements track critical count
+### Enhanced Progress Indicators (NEW!)
+- **Functionality**: Real-time progress bars on animals and buildings showing production cycles, percentage completion badges
+- **Purpose**: Give clear visual feedback on passive production status
+- **Trigger**: Animal/building producing → Progress bar fills → Percentage shown on badge → Produces resource → Bar resets
+- **Progression**: Place animal/building → Watch progress bar → See production cycles → Optimize timing
+- **Success criteria**: Smooth progress animations, accurate percentages, clear visual distinction from growing crops
 
-### Sticky Resource Bar (NEW!)
-- **Functionality**: Resource display remains fixed at top of screen while scrolling for constant visibility
-- **Purpose**: Always see resource counts without scrolling back up
-- **Trigger**: Scroll down page → Resource bar stays at top with backdrop blur → Always accessible
-- **Progression**: Resources visible → Scroll down → Bar stays visible with subtle styling
-- **Success criteria**: Smooth sticky behavior, no layout jumps, backdrop blur for readability, doesn't obscure content
-
-### Resource Center Guide (NEW!)
-- **Functionality**: Complete game encyclopedia with 6 tabs: Guide, Crops, Animals, Buildings, Tech, Achievements - explains everything
-- **Purpose**: Centralized reference for all game mechanics and content without leaving the game
-- **Trigger**: Click Guide tab → Browse categories → View detailed cards for every item → Understand mechanics
-- **Progression**: Open guide → Select category → Scroll through all items → Read descriptions/costs/yields → Plan strategy
-- **Success criteria**: Covers all 13 crops, 9 animals, 12 buildings, 36 techs, 30 achievements with complete details, welcoming guide section explains core mechanics
-
-### AI Chatbot Advisor
-- **Functionality**: Floating chat interface with contextual tips and Q&A system for farming advice
-- **Purpose**: Guide players through complex systems and provide hints when stuck
-- **Trigger**: Auto-opens with tips at key moments (first harvest, tech unlock, etc.) → User can click to chat → Ask questions about crops/animals/strategy
-- **Progression**: Passive tips appear → Click bot icon → Chat interface opens → Ask questions or tap suggestions → Get instant answers
-- **Success criteria**: Bot provides 10+ contextual tips, responds to crop/animal/building/tech/money/strategy keywords, feels helpful not intrusive
+### AI Chatbot Advisor (ENHANCED!)
+- **Functionality**: Always-visible chat input with contextual tips about research generation and progression hints
+- **Purpose**: Guide players through complex systems, especially research point generation which was confusing
+- **Trigger**: Auto-opens with tips at key moments → Specifically helps with "how to get research" → Chat interface always accessible with visible input field → Ask questions
+- **Progression**: Passive tips appear → Explicit research tips → Click bot icon → Chat interface stays fixed → Input always visible → Get instant answers
+- **Success criteria**: Input field never disappears, fixed height chat window, explicit tips about Tomatoes/Grapes for research, responds to research/progression questions
 
 ### Progression Path Visualization
 - **Functionality**: Visual milestone tracker showing 11 key progression goals from first harvest to ultimate farmer

@@ -21,8 +21,9 @@ interface ChatBotProps {
 
 const TIPS = [
   { trigger: (gs: GameState) => gs.totalHarvested === 0 && gs.resources.seeds >= 1, message: "🌱 Welcome! Start by clicking an empty plot to plant your first crop. Wheat is a great beginner choice!" },
-  { trigger: (gs: GameState) => gs.totalHarvested >= 1 && gs.totalHarvested < 3, message: "🎉 Great harvest! Keep planting and harvesting to earn gold and research points." },
-  { trigger: (gs: GameState) => gs.resources.research >= 50 && gs.techs.length === 0, message: "🔬 You have research points! Check the Tech tab to unlock new crops, animals, and upgrades." },
+  { trigger: (gs: GameState) => gs.totalHarvested >= 1 && gs.totalHarvested < 3, message: "🎉 Great harvest! Keep planting and harvesting to earn gold and research points. Tomatoes and grapes give research!" },
+  { trigger: (gs: GameState) => gs.resources.research >= 50 && gs.techs.length === 0, message: "🔬 You have 50+ research points! Click the Tech tab to unlock new crops, animals, and upgrades." },
+  { trigger: (gs: GameState) => gs.resources.research < 10 && gs.totalHarvested >= 3 && gs.techs.length === 0, message: "📚 Need research? Harvest Tomatoes (🍅) or Grapes (🍇) to generate research points! They're in the Crops tab after basic unlocks." },
   { trigger: (gs: GameState) => gs.techs.length >= 1 && gs.plots.filter(p => p.type === 'animal').length === 0, message: "🐔 Unlocked animals? They provide passive resources! Try placing a chicken for automatic egg production." },
   { trigger: (gs: GameState) => gs.plots.filter(p => p.type === 'animal').length >= 1 && gs.plots.filter(p => p.type === 'building').length === 0, message: "🏭 Buildings produce resources automatically! Wells generate water, windmills create energy." },
   { trigger: (gs: GameState) => gs.totalGoldEarned >= 500 && gs.techs.length < 3, message: "💡 Invest in technologies! Efficiency upgrades like Irrigation and Composting multiply your yields." },
@@ -54,7 +55,7 @@ const CHATBOT_RESPONSES: Record<string, (gs: GameState) => string> = {
     if (gs.resources.gold < 100) return "💰 Plant and harvest crops to earn gold! Wheat and corn are reliable early money makers."
     return "💎 Focus on high-value crops like strawberries and grapes. Use buildings to automate resource production and scale faster!"
   },
-  research: () => "🔬 Earn research points by harvesting crops (especially tomatoes and grapes) or building Research Labs. Spend them in the Tech tab!",
+  research: () => "🔬 Earn research points by harvesting crops that give research (Tomatoes 🍅, Grapes 🍇, higher-tier fruits) or build Research Labs. Spend research in the Tech tab to unlock new content!",
   strategy: (gs) => {
     if (gs.totalHarvested < 10) return "🎯 Early strategy: Plant wheat/corn repeatedly → Earn gold & research → Unlock basic techs → Expand to animals"
     if (gs.techs.length < 5) return "🎯 Mid strategy: Balance crops, animals, and buildings → Unlock efficiency techs → Automate resource production"
@@ -147,9 +148,9 @@ export function ChatBot({ gameState }: ChatBotProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-4 right-4 z-50 w-[380px] max-h-[600px] shadow-2xl"
+            className="fixed bottom-4 right-4 z-50 w-[380px] h-[600px] shadow-2xl"
           >
-            <Card className="flex flex-col h-full border-2 border-primary/20">
+            <Card className="flex flex-col h-full border-2 border-primary/20 overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-accent/10">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -170,7 +171,7 @@ export function ChatBot({ gameState }: ChatBotProps) {
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 p-4" ref={scrollRef as any}>
+              <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollRef as any}>
                 <div className="space-y-3">
                   {messages.map((msg) => (
                     <motion.div
@@ -193,7 +194,7 @@ export function ChatBot({ gameState }: ChatBotProps) {
                 </div>
               </ScrollArea>
 
-              <div className="p-4 border-t bg-card">
+              <div className="p-4 border-t bg-card flex-shrink-0">
                 <div className="flex gap-2">
                   <Input
                     value={input}
