@@ -10,6 +10,9 @@ import { ActivityLog } from '@/components/ActivityLog'
 import { ProgressionSystem } from '@/components/ProgressionSystem'
 import { TutorialOverlay } from '@/components/TutorialOverlay'
 import { HelpButton } from '@/components/HelpButton'
+import { ChatBot } from '@/components/ChatBot'
+import { ProgressionPath } from '@/components/ProgressionPath'
+import { AchievementPopup } from '@/components/AchievementPopup'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
@@ -33,8 +36,9 @@ import {
   calculateAnimalProductionInterval,
   addActivityLog,
   formatResourceGain,
+  getAchievementById,
 } from '@/lib/gameEngine'
-import { Trophy, TreeStructure, Farm, ListBullets, Sparkle } from '@phosphor-icons/react'
+import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 
 function App() {
@@ -43,6 +47,9 @@ function App() {
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState('farm')
   const [hasSeenTutorial, setHasSeenTutorial] = useKV<boolean>('tutorial-completed', false)
+  const [achievementPopup, setAchievementPopup] = useState<any>(null)
+  const [previousAchievements, setPreviousAchievements] = useState<string[]>([])
+  const [recentLogCount, setRecentLogCount] = useState(0)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -112,6 +119,43 @@ function App() {
 
     return () => clearInterval(interval)
   }, [gameState, setGameState])
+
+  useEffect(() => {
+    const newAchievements = gameState.achievements.filter(
+      a => !previousAchievements.includes(a)
+    )
+    
+    if (newAchievements.length > 0 && previousAchievements.length > 0) {
+      const latestAchievement = newAchievements[0]
+      const achievementData = getAchievementById(latestAchievement)
+      if (achievementData) {
+        setAchievementPopup({
+          name: achievementData.name,
+          description: achievementData.description,
+          tier: achievementData.tier,
+          icon: achievementData.category === 'harvest' ? '🌾' : 
+                achievementData.category === 'wealth' ? '💰' :
+                achievementData.category === 'tech' ? '🔬' :
+                achievementData.category === 'animals' ? '🐄' :
+                achievementData.category === 'automation' ? '🏭' : '⭐'
+        })
+      }
+    }
+    
+    setPreviousAchievements(gameState.achievements)
+  }, [gameState.achievements])
+
+  useEffect(() => {
+    if (currentTab === 'log') {
+      setRecentLogCount(0)
+    }
+  }, [currentTab])
+
+  useEffect(() => {
+    if (currentTab !== 'log') {
+      setRecentLogCount(prev => Math.min(prev + 1, 99))
+    }
+  }, [gameState.activityLog.length])
 
   const handlePlotClick = (plotId: string) => {
     const plot = gameState.plots.find(p => p.id === plotId)
@@ -349,6 +393,14 @@ function App() {
   const unlockedBuildings = getUnlockedBuildings(gameState.techs)
   const availableTechs = getAvailableTechs(gameState.techs)
 
+  const readyToHarvest = gameState.plots.filter(
+    p => p.type === 'crop' && p.completesAt && p.completesAt <= Date.now()
+  ).length
+
+  const newAchievements = gameState.achievements.length - previousAchievements.filter(
+    a => gameState.achievements.includes(a)
+  ).length
+
   const achievementProgress: Record<string, number> = {
     first_harvest: gameState.totalHarvested,
     harvest_10: gameState.totalHarvested,
@@ -382,11 +434,19 @@ function App() {
     <div className="min-h-screen bg-background">
       <Toaster position="bottom-right" richColors closeButton />
       
+      {achievementPopup && (
+        <AchievementPopup
+          achievement={achievementPopup}
+          onClose={() => setAchievementPopup(null)}
+        />
+      )}
+      
       {!hasSeenTutorial && (
         <TutorialOverlay onComplete={() => setHasSeenTutorial(() => true)} />
       )}
       
       <HelpButton />
+      <ChatBot gameState={gameState} />
       
       <div className="container mx-auto p-4 max-w-[1600px]">
         <div className="mb-4">
@@ -400,37 +460,49 @@ function App() {
           <ResourceBar resources={gameState.resources} />
         </div>
 
+        <ProgressionPath gameState={gameState} />
+
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
           <div>
             <Tabs value={currentTab} onValueChange={setCurrentTab}>
               <TabsList className="grid w-full grid-cols-5 mb-3">
-                <TabsTrigger value="farm" className="flex items-center gap-1 text-sm">
+                <TabsTrigger value="farm" className="flex items-center gap-1 text-sm relative">
                   <Farm weight="fill" className="w-4 h-4" />
                   Farm
+                  {readyToHarvest > 0 && (
+                    <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-xs h-5 animate-pulse">
+                      {readyToHarvest}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="tech" className="flex items-center gap-1 text-sm">
+                <TabsTrigger value="tech" className="flex items-center gap-1 text-sm relative">
                   <TreeStructure weight="fill" className="w-4 h-4" />
                   Tech
                   {availableTechs.length > 0 && (
-                    <Badge variant="default" className="ml-1 px-1 py-0 text-xs">
+                    <Badge variant="default" className="ml-1 px-1.5 py-0 text-xs h-5">
                       {availableTechs.length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="achievements" className="flex items-center gap-1 text-sm">
+                <TabsTrigger value="achievements" className="flex items-center gap-1 text-sm relative">
                   <Trophy weight="fill" className="w-4 h-4" />
                   Goals
+                  {newAchievements > 0 && currentTab !== 'achievements' && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse"></span>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="progression" className="flex items-center gap-1 text-sm">
                   <Sparkle weight="fill" className="w-4 h-4" />
                   Progress
                 </TabsTrigger>
-                <TabsTrigger value="log" className="flex items-center gap-1 text-sm">
+                <TabsTrigger value="log" className="flex items-center gap-1 text-sm relative">
                   <ListBullets weight="fill" className="w-4 h-4" />
                   Log
-                  <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs">
-                    {gameState.activityLog.length}
-                  </Badge>
+                  {recentLogCount > 0 && currentTab !== 'log' && (
+                    <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-xs h-5 animate-pulse">
+                      {recentLogCount}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               </TabsList>
 
@@ -443,6 +515,7 @@ function App() {
                   techs={availableTechs}
                   researchPoints={gameState.resources.research}
                   onPurchase={handlePurchaseTech}
+                  purchasedTechs={gameState.techs}
                 />
               </TabsContent>
 

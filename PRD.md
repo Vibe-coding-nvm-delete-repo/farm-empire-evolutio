@@ -1,16 +1,51 @@
 # Farm Empire - Product Requirements Document
 
-Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 33 technologies, and 26 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log.
+Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 33 technologies, and 26 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead.
 
 **Experience Qualities**:
-1. **Crystal Clear & Minimalist** - Clean, modern UI with comprehensive tooltips on every element. No confusion, only strategic decisions.
-2. **Maximally Rewarding** - Constant progression with meaningful unlocks, instant feedback, and satisfying rewards at every tier.
-3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), and progression (research).
+1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, and progression path showing next steps. No confusion, only strategic decisions.
+2. **Maximally Rewarding** - Constant progression with meaningful unlocks, instant feedback, stunning achievement popups, and satisfying rewards at every tier.
+3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), and progression (research). Enhanced tech tree with category/tier views.
 
 **Complexity Level**: Complex Application (advanced functionality with full progression system)
   - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Comprehensive activity logging, real-time production, and interconnected reward systems that keep players engaged.
 
 ## Essential Features
+
+### AI Chatbot Advisor
+- **Functionality**: Floating chat interface with contextual tips and Q&A system for farming advice
+- **Purpose**: Guide players through complex systems and provide hints when stuck
+- **Trigger**: Auto-opens with tips at key moments (first harvest, tech unlock, etc.) → User can click to chat → Ask questions about crops/animals/strategy
+- **Progression**: Passive tips appear → Click bot icon → Chat interface opens → Ask questions or tap suggestions → Get instant answers
+- **Success criteria**: Bot provides 10+ contextual tips, responds to crop/animal/building/tech/money/strategy keywords, feels helpful not intrusive
+
+### Progression Path Visualization
+- **Functionality**: Visual milestone tracker showing 11 key progression goals from first harvest to ultimate farmer
+- **Purpose**: Show clear path forward, prevent confusion about what to do next
+- **Trigger**: Always visible at top of screen → Shows current milestone with hint → Celebrates completed milestones
+- **Progression**: Empty milestones → Current goal highlighted with hint → Complete goal → Milestone fills with checkmark → Next goal becomes active
+- **Success criteria**: Clear visual progress, animated states, helpful hints for current goal, celebratory completed states
+
+### Beautiful Achievement Popups
+- **Functionality**: Full-screen animated celebration when achievements unlock with particles, rotation, and smooth animations
+- **Purpose**: Make achievement moments feel special and rewarding
+- **Trigger**: Achievement completes → Animated popup appears → Shows achievement icon, name, description, tier → Click to dismiss
+- **Progression**: Achievement earned → Screen dims → Popup animates in → Trophy bounces → Particles scatter → User celebrates → Click to dismiss
+- **Success criteria**: Smooth animations, feels premium, particles and effects, not skippable accidentally
+
+### Enhanced Tech Tree Navigation
+- **Functionality**: Dual-view tech tree (by category or by tier) with progress tracking, prerequisite checking, and clear status
+- **Purpose**: Make the 33-technology tree easy to navigate and understand at a glance
+- **Trigger**: Click Tech tab → Toggle between category/tier view → See all techs organized → Click to unlock
+- **Progression**: View all techs → Toggle views → See locked/unlocked/affordable states → Check prerequisites → Unlock tech
+- **Success criteria**: Both views show progress bars, techs show prerequisite status, locked techs clearly marked, affordable techs highlighted
+
+### Smart Tab Notifications
+- **Functionality**: Real-time badges on tabs showing pending actions: ready crops on Farm, available techs on Tech, new logs on Log
+- **Purpose**: Guide attention to tabs that need interaction without being overwhelming
+- **Trigger**: Crop ready → Farm tab shows count → Tech affordable → Tech tab shows count → New log entry → Log shows new count
+- **Progression**: Action pending → Badge appears on tab → User checks tab → Badge clears
+- **Success criteria**: Badges are clear but not overwhelming, Farm shows ready harvests, Tech shows affordable techs, Log shows new entries
 
 ### Tutorial System
 - **Functionality**: 11-step interactive tutorial explaining every core mechanic with clear examples
