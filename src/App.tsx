@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useGameState } from '@/hooks/useGameState'
 import { Resources } from '@/lib/types'
 import { ResourceBar } from '@/components/ResourceBar'
+import { StatsOverview } from '@/components/StatsOverview'
 import { FarmGrid } from '@/components/FarmGrid'
 import { QueuePanel } from '@/components/QueuePanel'
 import { TechTree } from '@/components/TechTree'
@@ -157,7 +158,7 @@ function AppContent() {
         updated = checkAchievements(updated)
         return updated
       })
-    }, 250)
+    }, 200)
 
     return () => clearInterval(interval)
   }, [setGameState])
@@ -299,7 +300,7 @@ function AppContent() {
         
         toast.success(`Harvested ${crop.name}!`, {
           description: `${harvestBonus.isCritical ? '🎉 CRITICAL! ' : ''}${formatResourceGain(finalYield)} (${harvestBonus.rollValue}% yield)`,
-          duration: harvestBonus.isCritical ? 3000 : 2000,
+          duration: harvestBonus.isCritical ? 2000 : 1200,
         })
       }
     } else if (plot.type === 'animal' && plot.animalId) {
@@ -379,7 +380,7 @@ function AppContent() {
     toast.success(plotIds.length > 1 
       ? `Planted ${plotIds.length}x ${crop.name}!`
       : `Planted ${crop.name}!`, 
-      { duration: 1500 }
+      { duration: 1000 }
     )
     
     setSelectedPlotId(null)
@@ -422,7 +423,7 @@ function AppContent() {
       return checkAchievements(updated)
     })
 
-    toast.success(`Purchased ${animal.name}!`, { duration: 1500 })
+    toast.success(`Purchased ${animal.name}!`, { duration: 1200 })
     setSelectedPlotId(null)
     setPlacementDialogOpen(false)
   }, [selectedPlotId, gameState, setGameState, setSelectedPlotId, setPlacementDialogOpen])
@@ -462,7 +463,7 @@ function AppContent() {
       return checkAchievements(updated)
     })
 
-    toast.success(`Built ${building.name}!`, { duration: 1500 })
+    toast.success(`Built ${building.name}!`, { duration: 1200 })
     setSelectedPlotId(null)
     setPlacementDialogOpen(false)
   }, [selectedPlotId, gameState, setGameState, setSelectedPlotId, setPlacementDialogOpen])
@@ -496,7 +497,7 @@ function AppContent() {
 
     toast.success(`Unlocked ${tech.name}!`, {
       description: tech.description,
-      duration: 2500,
+      duration: 2000,
     })
   }, [gameState, setGameState])
 
@@ -569,7 +570,7 @@ function AppContent() {
 
     toast.success(`Collected ${readyPlots.length} crops!`, {
       description: `${criticals > 0 ? `🎉 ${criticals} Critical! ` : ''}${formatResourceGain(totalYields)}`,
-      duration: 2500,
+      duration: 2000,
     })
   }, [gameState, setGameState])
 
@@ -643,7 +644,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Toaster position="bottom-right" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton duration={2000} />
       
       <UnlockNotificationManager unlocks={unlockQueue} />
       
@@ -670,19 +671,19 @@ function AppContent() {
       <HelpButton />
       <ChatBot gameState={gameState} />
       
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+      <div className="sticky top-0 z-40 bg-background/98 backdrop-blur-md border-b shadow-sm">
         <div className="container mx-auto p-4 max-w-[1600px]">
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <div className="flex-1" />
-              <h1 className="text-4xl font-bold text-center text-primary flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-center text-primary flex items-center gap-2">
                 🌾 Farm Empire
               </h1>
               <div className="flex-1 flex justify-end">
                 <NotificationsPanel />
               </div>
             </div>
-            <p className="text-center text-sm text-muted-foreground">Build the ultimate farming dynasty</p>
+            <p className="text-center text-xs text-muted-foreground font-medium">Build your ultimate farming dynasty</p>
           </div>
           <ResourceBar resources={gameState.resources} />
         </div>
@@ -695,53 +696,55 @@ function AppContent() {
           hasCompostHeap={hasCompostHeap}
         />
         
+        <StatsOverview gameState={gameState} />
+        
         <ProgressionPath gameState={gameState} />
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
           <div>
             <Tabs value={currentTab} onValueChange={setCurrentTab}>
-              <TabsList className="grid w-full grid-cols-6 mb-3">
-                <TabsTrigger value="farm" className="flex items-center gap-1 text-sm relative">
-                  <Farm weight="fill" className="w-4 h-4" />
-                  Farm
+              <TabsList className="grid w-full grid-cols-6 mb-4 h-auto p-1">
+                <TabsTrigger value="farm" className="flex flex-col items-center gap-1 py-2 px-3 relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <Farm weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Farm</span>
                   {readyToHarvest > 0 && (
-                    <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-xs h-5 animate-pulse">
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0 text-xs h-5 min-w-[20px] animate-pulse">
                       {readyToHarvest}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="tech" className="flex items-center gap-1 text-sm relative">
-                  <TreeStructure weight="fill" className="w-4 h-4" />
-                  Tech
+                <TabsTrigger value="tech" className="flex flex-col items-center gap-1 py-2 px-3 relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <TreeStructure weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Tech</span>
                   {availableTechs.length > 0 && (
-                    <Badge variant="default" className="ml-1 px-1.5 py-0 text-xs h-5">
+                    <Badge variant="default" className="absolute -top-1 -right-1 px-1.5 py-0 text-xs h-5 min-w-[20px] bg-blue-500">
                       {availableTechs.length}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="achievements" className="flex items-center gap-1 text-sm relative">
-                  <Trophy weight="fill" className="w-4 h-4" />
-                  Goals
+                <TabsTrigger value="achievements" className="flex flex-col items-center gap-1 py-2 px-3 relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <Trophy weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Goals</span>
                   {newAchievements > 0 && currentTab !== 'achievements' && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse"></span>
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full animate-pulse border-2 border-background"></span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="progression" className="flex items-center gap-1 text-sm">
-                  <Sparkle weight="fill" className="w-4 h-4" />
-                  Progress
+                <TabsTrigger value="progression" className="flex flex-col items-center gap-1 py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <Sparkle weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Progress</span>
                 </TabsTrigger>
-                <TabsTrigger value="log" className="flex items-center gap-1 text-sm relative">
-                  <ListBullets weight="fill" className="w-4 h-4" />
-                  Log
+                <TabsTrigger value="log" className="flex flex-col items-center gap-1 py-2 px-3 relative data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <ListBullets weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Log</span>
                   {recentLogCount > 0 && currentTab !== 'log' && (
-                    <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-xs h-5 animate-pulse">
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0 text-xs h-5 min-w-[20px] animate-pulse">
                       {recentLogCount}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="guide" className="flex items-center gap-1 text-sm">
-                  <Book weight="fill" className="w-4 h-4" />
-                  Guide
+                <TabsTrigger value="guide" className="flex flex-col items-center gap-1 py-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                  <Book weight="fill" className="w-5 h-5" />
+                  <span className="text-xs font-semibold">Guide</span>
                 </TabsTrigger>
               </TabsList>
 

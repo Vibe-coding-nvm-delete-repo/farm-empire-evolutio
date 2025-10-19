@@ -1,18 +1,53 @@
 # Farm Empire - Product Requirements Document
 
-Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 36 technologies, and 30 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead. A dice-roll harvest system adds exciting variance to every crop harvest, with luck upgrades that make critical yields more common. Bulk actions streamline farm management with collect all and row planting features. **All game state persists automatically using useKV hooks** - progress is never lost on refresh!
+Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 36 technologies, and 30 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor with TRUE LLM integration provides intelligent, specific answers to any question. A visual progression path shows the journey ahead with clear stats overview. A dice-roll harvest system adds exciting variance to every crop harvest, with luck upgrades that make critical yields more common. Bulk actions streamline farm management with collect all and row planting features. **All game state persists automatically using useKV hooks** - progress is never lost on refresh!
 
-**Performance**: Heavily optimized with memoization, change detection, re-render prevention, and comprehensive test coverage (47 unit tests) ensuring snappy 60 FPS gameplay even with 20 active plots. Build-optimized with proper dependency management to prevent infinite loops.
+**Performance**: Heavily optimized with memoization (200ms game loop), change detection, re-render prevention, fast animations (150-250ms), and comprehensive test coverage ensuring snappy 60 FPS gameplay even with 20 active plots. Toasts display for only 1-2 seconds for instant feedback.
 
 **Experience Qualities**:
-1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, progression path with hints on how to progress, and complete resource center guide. Clear explanations for earning research points.
-2. **Maximally Rewarding & Addictive** - Constant progression with dice-roll harvest excitement, critical harvest celebrations, instant feedback, stunning achievement popups, and luck-based variance that keeps every harvest thrilling. Bulk actions for efficiency.
-3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), luck upgrades (critical harvests), and progression (research). Enhanced tech tree with category/tier views.
+1. **Crystal Clear & Guided** - Clean, modern UI with stats overview at top, comprehensive tooltips, TRUE AI chatbot that answers ANY specific question using LLM, progression path, and complete resource center guide. Clear visual hierarchy with improved tab design.
+2. **Maximally Rewarding & Lightning Fast** - Constant progression with snappy animations (0.15-0.25s), dice-roll harvest excitement with improved visuals, critical harvest celebrations with confetti, instant feedback, stunning achievement popups with confetti, and luck-based variance that keeps every harvest thrilling. All interactions feel immediate and responsive.
+3. **Deeply Strategic & Transparent** - Balanced resource economy with clear stats displayed at top showing total gold earned, harvests, technologies, achievements, active plots, and playtime. Enhanced tech tree with category/tier views. AI advisor provides SPECIFIC advice with exact numbers and costs.
 
 **Complexity Level**: Complex Application (advanced functionality with full progression system)
-  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Dice-roll harvest mechanics with luck progression, comprehensive resource center, sticky resource bar, real-time production with visible progress bars, bulk harvest/planting features, and interconnected reward systems that keep players engaged. Performance-optimized for smooth 60 FPS gameplay.
+  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Dice-roll harvest mechanics with luck progression, comprehensive resource center, sticky resource bar with stats overview, real-time production with visible progress bars, bulk harvest/planting features, and interconnected reward systems. Performance-optimized for 60 FPS with 200ms game loop, sub-250ms animations, and intelligent LLM-powered chatbot that provides SPECIFIC advice with actual game data.
 
 ## Essential Features
+
+### Stats Overview Dashboard (NEW!)
+- **Functionality**: 6 stat cards showing Total Gold, Harvests, Technologies, Achievements, Active Plots ratio, and Playtime at the top of the screen
+- **Purpose**: Give players clear visibility into their progression at a glance
+- **Trigger**: Always visible → Updates in real-time → Hover for detailed tooltips
+- **Progression**: Start farming → See stats grow → Track progress → Feel accomplished
+- **Success criteria**: Clean card design, smooth animations on load (staggered 0-0.25s delays), accurate real-time updates, informative tooltips
+
+### Intelligent LLM AI Chatbot (ENHANCED!)
+- **Functionality**: TRUE AI integration using spark.llm API - provides SPECIFIC, DETAILED answers based on actual game state, unlocked content, and exact costs/yields
+- **Purpose**: Answer ANY player question with precision - not generic responses but specific guidance based on their current situation
+- **Trigger**: Click chat button → Ask anything → AI analyzes full game state → Provides specific advice with exact numbers
+- **Progression**: Generic tips → Specific questions → AI provides exact crop costs, building requirements, tech prerequisites, resource production rates, etc.
+- **Success criteria**: Answers reference specific items player has unlocked, provides exact costs/yields, explains exact steps to unlock locked content, responds in 1-2 seconds, thinking indicator shown
+
+### Snappy Animations & Fast Feedback (NEW!)
+- **Functionality**: All animations run 150-250ms (vs 300-500ms before), toasts display 1-2s (vs 2-3s), game loop 200ms (vs 250ms)
+- **Purpose**: Make every interaction feel immediate and responsive, create addictive feedback loop
+- **Trigger**: Any action → Instant visual feedback → Quick animation → Ready for next action
+- **Progression**: Plant → Instant feedback → Harvest → Quick animation → Plant again → Flow state achieved
+- **Success criteria**: No perceived lag, animations complete before user's next action, feels snappy and responsive
+
+### Confetti Celebrations (NEW!)
+- **Functionality**: 40 colorful confetti particles rain down when achievements or progression milestones are unlocked
+- **Purpose**: Make major moments feel extra special and celebratory
+- **Trigger**: Achievement unlocks → Confetti bursts → Particles fall across screen → Fades after 2s
+- **Progression**: Regular unlock → Notice confetti → Feel excitement → Want more achievements
+- **Success criteria**: Colorful particles, smooth physics, doesn't block UI, auto-cleans up, triggers on achievements and progression milestones
+
+### Enhanced Tab Navigation (NEW!)
+- **Functionality**: Larger, vertical-layout tabs with icons above text, better active state visibility, clearer badges for notifications
+- **Purpose**: Make navigation crystal clear and show important notifications prominently
+- **Trigger**: View tabs → See clear icons and labels → Notice badges → Click to navigate
+- **Progression**: See farm → Notice ready harvest badge → Click tab → See other sections
+- **Success criteria**: Icons prominent (w-5 h-5), text clearly labeled, active state obvious, badges visible and animated
 
 ### Bulk Actions (NEW!)
 - **Functionality**: Collect all ready crops with one click, bulk plant entire rows at once with row buttons
