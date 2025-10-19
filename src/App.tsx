@@ -13,6 +13,8 @@ import { HelpButton } from '@/components/HelpButton'
 import { ChatBot } from '@/components/ChatBot'
 import { ProgressionPath } from '@/components/ProgressionPath'
 import { AchievementPopup } from '@/components/AchievementPopup'
+import { HarvestRollAnimation } from '@/components/HarvestRollAnimation'
+import { ResourceCenter } from '@/components/ResourceCenter'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
@@ -37,8 +39,10 @@ import {
   addActivityLog,
   formatResourceGain,
   getAchievementById,
+  rollHarvestBonus,
+  applyHarvestBonus,
 } from '@/lib/gameEngine'
-import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell } from '@phosphor-icons/react'
+import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell, Book } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 
 function App() {
@@ -50,6 +54,7 @@ function App() {
   const [achievementPopup, setAchievementPopup] = useState<any>(null)
   const [previousAchievements, setPreviousAchievements] = useState<string[]>([])
   const [recentLogCount, setRecentLogCount] = useState(0)
+  const [harvestRoll, setHarvestRoll] = useState<{ rollValue: number, isCritical: boolean } | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -168,16 +173,22 @@ function App() {
       const crop = getCropById(plot.cropId!)
       if (crop) {
         const modifiers = (applyTechEffects(gameState) as any)._modifiers
-        const yield_ = calculateYield(crop.yield, modifiers)
+        const baseYield = calculateYield(crop.yield, modifiers)
+        
+        const harvestBonus = rollHarvestBonus(gameState.luckLevel)
+        const finalYield = applyHarvestBonus(baseYield, harvestBonus)
+        
+        setHarvestRoll({ rollValue: harvestBonus.rollValue, isCritical: harvestBonus.isCritical })
         
         setGameState(current => {
           if (!current) return gameState
           
           let updated = {
             ...current,
-            resources: addResources(current.resources, yield_),
+            resources: addResources(current.resources, finalYield),
             totalHarvested: current.totalHarvested + 1,
-            totalGoldEarned: current.totalGoldEarned + (yield_.gold || 0),
+            totalGoldEarned: current.totalGoldEarned + (finalYield.gold || 0),
+            criticalHarvestCount: current.criticalHarvestCount + (harvestBonus.isCritical ? 1 : 0),
             plots: current.plots.map(p =>
               p.id === plotId
                 ? { ...p, type: 'empty' as const, cropId: undefined, plantedAt: undefined, completesAt: undefined }
@@ -187,8 +198,8 @@ function App() {
           
           updated = addActivityLog(updated, {
             type: 'harvest',
-            message: `Harvested ${crop.name}`,
-            resources: yield_,
+            message: `Harvested ${crop.name} (${harvestBonus.rollValue}% yield${harvestBonus.isCritical ? ' - CRITICAL!' : ''})`,
+            resources: finalYield,
             icon: crop.icon,
           })
           
@@ -196,8 +207,8 @@ function App() {
         })
         
         toast.success(`Harvested ${crop.name}!`, {
-          description: formatResourceGain(yield_),
-          duration: 2000,
+          description: `${harvestBonus.isCritical ? '🎉 CRITICAL! ' : ''}${formatResourceGain(finalYield)} (${harvestBonus.rollValue}% yield)`,
+          duration: harvestBonus.isCritical ? 3000 : 2000,
         })
       }
     } else if (plot.type === 'animal' && plot.animalId) {
@@ -428,11 +439,23 @@ function App() {
     diverse_farm: new Set(gameState.plots.filter(p => p.cropId).map(p => p.cropId)).size,
     diverse_ranch: new Set(gameState.plots.filter(p => p.animalId).map(p => p.animalId)).size,
     empire_builder: gameState.plots.filter(p => p.type === 'building').length,
+    lucky_first: gameState.criticalHarvestCount,
+    lucky_10: gameState.criticalHarvestCount,
+    lucky_50: gameState.criticalHarvestCount,
+    lucky_100: gameState.criticalHarvestCount,
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Toaster position="bottom-right" richColors closeButton />
+      
+      {harvestRoll && (
+        <HarvestRollAnimation
+          rollValue={harvestRoll.rollValue}
+          isCritical={harvestRoll.isCritical}
+          onComplete={() => setHarvestRoll(null)}
+        />
+      )}
       
       {achievementPopup && (
         <AchievementPopup
@@ -448,24 +471,25 @@ function App() {
       <HelpButton />
       <ChatBot gameState={gameState} />
       
-      <div className="container mx-auto p-4 max-w-[1600px]">
-        <div className="mb-4">
-          <h1 className="text-4xl font-bold text-center mb-1 text-primary flex items-center justify-center gap-2">
-            🌾 Farm Empire
-          </h1>
-          <p className="text-center text-sm text-muted-foreground">Build the ultimate farming dynasty</p>
-        </div>
-
-        <div className="mb-4">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        <div className="container mx-auto p-4 max-w-[1600px]">
+          <div className="mb-3">
+            <h1 className="text-4xl font-bold text-center mb-1 text-primary flex items-center justify-center gap-2">
+              🌾 Farm Empire
+            </h1>
+            <p className="text-center text-sm text-muted-foreground">Build the ultimate farming dynasty</p>
+          </div>
           <ResourceBar resources={gameState.resources} />
         </div>
+      </div>
 
+      <div className="container mx-auto p-4 max-w-[1600px]">
         <ProgressionPath gameState={gameState} />
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
           <div>
             <Tabs value={currentTab} onValueChange={setCurrentTab}>
-              <TabsList className="grid w-full grid-cols-5 mb-3">
+              <TabsList className="grid w-full grid-cols-6 mb-3">
                 <TabsTrigger value="farm" className="flex items-center gap-1 text-sm relative">
                   <Farm weight="fill" className="w-4 h-4" />
                   Farm
@@ -504,6 +528,10 @@ function App() {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="guide" className="flex items-center gap-1 text-sm">
+                  <Book weight="fill" className="w-4 h-4" />
+                  Guide
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="farm" className="mt-0">
@@ -532,6 +560,10 @@ function App() {
 
               <TabsContent value="log" className="mt-0 h-[600px]">
                 <ActivityLog log={gameState.activityLog} />
+              </TabsContent>
+
+              <TabsContent value="guide" className="mt-0 h-[600px]">
+                <ResourceCenter />
               </TabsContent>
             </Tabs>
           </div>

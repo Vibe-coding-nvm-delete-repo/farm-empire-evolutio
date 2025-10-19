@@ -1,16 +1,44 @@
 # Farm Empire - Product Requirements Document
 
-Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 33 technologies, and 26 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead.
+Build an expansive, deeply engaging idle farm empire game where players progress from a small farmer to an agricultural tycoon. The game features 13 crops, 9 animals, 12 buildings, 36 technologies, and 30 achievements across 6 tiers of progression. Players plant crops, raise livestock, research technologies, automate production, and track every action through a comprehensive activity log. An AI advisor provides contextual hints and answers questions, while a visual progression path shows the journey ahead. A dice-roll harvest system adds exciting variance to every crop harvest, with luck upgrades that make critical yields more common.
 
 **Experience Qualities**:
-1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, and progression path showing next steps. No confusion, only strategic decisions.
-2. **Maximally Rewarding** - Constant progression with meaningful unlocks, instant feedback, stunning achievement popups, and satisfying rewards at every tier.
-3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), and progression (research). Enhanced tech tree with category/tier views.
+1. **Crystal Clear & Guided** - Clean, modern UI with comprehensive tooltips, an AI chatbot advisor, progression path, and complete resource center guide.
+2. **Maximally Rewarding & Addictive** - Constant progression with dice-roll harvest excitement, critical harvest celebrations, instant feedback, stunning achievement popups, and luck-based variance that keeps every harvest thrilling.
+3. **Deeply Strategic** - Balanced resource economy requiring smart decisions between growth (crops), income (animals), automation (buildings), luck upgrades (critical harvests), and progression (research). Enhanced tech tree with category/tier views.
 
 **Complexity Level**: Complex Application (advanced functionality with full progression system)
-  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Comprehensive activity logging, real-time production, and interconnected reward systems that keep players engaged.
+  - Multi-layered progression system with crops, animals, buildings, technologies, achievements spanning 6 tiers. Dice-roll harvest mechanics with luck progression, comprehensive resource center, sticky resource bar, real-time production, and interconnected reward systems that keep players engaged.
 
 ## Essential Features
+
+### Dice-Roll Harvest System (NEW!)
+- **Functionality**: Every crop harvest rolls a dice (75-150% normal, 150-200% critical) to determine yield multiplier with exciting animations
+- **Purpose**: Add thrilling variance and "one more harvest" addictive element to gameplay
+- **Trigger**: Click ready crop → Dice rolls automatically → Animated number displays → Yield calculated → Resources awarded
+- **Progression**: Base harvests (75-150%) → Unlock Luck techs → Higher critical chance → More consistent big yields
+- **Success criteria**: Dramatic roll animations for criticals, satisfying normal rolls, clear percentage display, luck progression feels meaningful
+
+### Luck Progression System (NEW!)
+- **Functionality**: Three luck technologies (Lucky Harvest, Fortune Farming, Golden Touch) that increase critical harvest chance and improve roll ranges
+- **Purpose**: Create long-term progression goal focused on maximizing harvest variance
+- **Trigger**: Unlock techs → Critical chance increases by 2% per level → Roll ranges improve → Track critical harvest achievements
+- **Progression**: 10% base critical → 12% (Tier 2) → 14% (Tier 3) → 16% (Tier 4) → Consistent amazing yields
+- **Success criteria**: Clear luck stats visible, critical harvests feel special, progression feels impactful, achievements track critical count
+
+### Sticky Resource Bar (NEW!)
+- **Functionality**: Resource display remains fixed at top of screen while scrolling for constant visibility
+- **Purpose**: Always see resource counts without scrolling back up
+- **Trigger**: Scroll down page → Resource bar stays at top with backdrop blur → Always accessible
+- **Progression**: Resources visible → Scroll down → Bar stays visible with subtle styling
+- **Success criteria**: Smooth sticky behavior, no layout jumps, backdrop blur for readability, doesn't obscure content
+
+### Resource Center Guide (NEW!)
+- **Functionality**: Complete game encyclopedia with 6 tabs: Guide, Crops, Animals, Buildings, Tech, Achievements - explains everything
+- **Purpose**: Centralized reference for all game mechanics and content without leaving the game
+- **Trigger**: Click Guide tab → Browse categories → View detailed cards for every item → Understand mechanics
+- **Progression**: Open guide → Select category → Scroll through all items → Read descriptions/costs/yields → Plan strategy
+- **Success criteria**: Covers all 13 crops, 9 animals, 12 buildings, 36 techs, 30 achievements with complete details, welcoming guide section explains core mechanics
 
 ### AI Chatbot Advisor
 - **Functionality**: Floating chat interface with contextual tips and Q&A system for farming advice
@@ -89,15 +117,19 @@ Build an expansive, deeply engaging idle farm empire game where players progress
 - **Progression**: Tier 1 basics → Tier 2 energy/production → Tier 3 processing → Tier 4 research → Tier 5 solar/automation → Tier 6 factory
 - **Success criteria**: Buildings show production status, output visible in real-time, tooltips explain production rates
 
-### Technology Tree (33 Technologies, 5 Tiers)
-- **Functionality**: Unlock new content and powerful efficiency upgrades using research points
+### Technology Tree (36 Technologies, 5 Tiers)
+- **Functionality**: Unlock new content and powerful efficiency upgrades using research points, including 3 luck technologies for harvest bonuses
 - **Purpose**: Gate progression, reward strategic planning, provide multiplicative power increases
 - **Trigger**: Earn research → Tech tab → Click technology → Spend research to unlock
-- **Progression**: Basic unlocks → Efficiency upgrades → Advanced content → Automation → Master Farmer (25% all bonuses)
-- **Success criteria**: Technologies organized by category, show prerequisites, display clear benefits, unlock immediately
+- **Progression**: Basic unlocks → Efficiency upgrades → Luck techs (critical harvests) → Advanced content → Automation → Master Farmer (25% all bonuses)
+- **Success criteria**: Technologies organized by category, show prerequisites, display clear benefits, luck techs clearly boost critical chance
 
-### Achievement System (26 Achievements, 5 Tiers)
-- **Functionality**: Complete goals for bonus rewards across harvest, wealth, tech, animals, production, special categories
+### Achievement System (30 Achievements, 5 Tiers)
+- **Functionality**: Complete goals for bonus rewards across harvest, wealth, tech, animals, production, special, and luck categories
+- **Purpose**: Provide long-term goals, milestones, and bonus resources for completion
+- **Trigger**: Reach milestone → Animated popup → Award resources instantly → Track in panel
+- **Progression**: Basic goals (first harvest) → Intermediate (50+ harvests) → Advanced (500+) → Master (1000+) → Critical harvest tracking
+- **Success criteria**: 30 achievements with new luck category (Lucky Strike, Fortune Favors, Luck Master, Fortune Incarnate), clear progress tracking, instant rewards
 - **Purpose**: Provide additional progression layer with tangible rewards
 - **Trigger**: Automatic progress tracking, instant reward on completion
 - **Progression**: Tier 1 basics → Tier 2 intermediate → Tier 3 advanced → Tier 4 expert → Tier 5 master

@@ -20,6 +20,8 @@ const INITIAL_GAME_STATE: GameState = {
   prestigeMultiplier: 1,
   startTime: Date.now(),
   lastSaveTime: Date.now(),
+  luckLevel: 0,
+  criticalHarvestCount: 0,
 }
 
 export function useGameState() {

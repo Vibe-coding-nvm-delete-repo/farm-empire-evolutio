@@ -86,6 +86,7 @@ export function applyTechEffects(state: GameState): GameState {
   let animalYield = 1
   let cropRotation = 1
   let masterMultiplier = 1
+  let luckLevel = 0
 
   state.techs.forEach(techId => {
     const tech = getTechById(techId)
@@ -113,6 +114,8 @@ export function applyTechEffects(state: GameState): GameState {
       cropRotation *= multiplier
     } else if (tech.effect.startsWith('master_multiplier_') && !isNaN(multiplier)) {
       masterMultiplier *= multiplier
+    } else if (tech.effect.startsWith('luck_level_') && !isNaN(multiplier)) {
+      luckLevel += multiplier
     }
   })
 
@@ -120,6 +123,7 @@ export function applyTechEffects(state: GameState): GameState {
 
   return {
     ...state,
+    luckLevel,
     _modifiers: {
       growthMultiplier: growthMultiplier * totalMultiplier,
       yieldMultiplier: yieldMultiplier * cropRotation * totalMultiplier * state.prestigeMultiplier,
@@ -141,6 +145,37 @@ export function calculateYield(baseYield: Partial<Resources>, modifiers: any): P
   const result: Partial<Resources> = {}
   Object.entries(baseYield).forEach(([key, value]) => {
     result[key as keyof Resources] = Math.floor((value || 0) * multiplier)
+  })
+  return result
+}
+
+export function rollHarvestBonus(luckLevel: number = 0): { multiplier: number, isCritical: boolean, rollValue: number } {
+  const baseLuckBonus = luckLevel * 0.05
+  const criticalChance = 0.1 + (luckLevel * 0.02)
+  
+  const roll = Math.random()
+  
+  if (roll < criticalChance) {
+    const critMultiplier = 1.5 + (Math.random() * 0.5) + (luckLevel * 0.1)
+    return { 
+      multiplier: critMultiplier, 
+      isCritical: true,
+      rollValue: Math.round(critMultiplier * 100)
+    }
+  }
+  
+  const normalMultiplier = 0.75 + (Math.random() * 0.75) + baseLuckBonus
+  return { 
+    multiplier: normalMultiplier, 
+    isCritical: false,
+    rollValue: Math.round(normalMultiplier * 100)
+  }
+}
+
+export function applyHarvestBonus(baseYield: Partial<Resources>, bonus: { multiplier: number, isCritical: boolean }): Partial<Resources> {
+  const result: Partial<Resources> = {}
+  Object.entries(baseYield).forEach(([key, value]) => {
+    result[key as keyof Resources] = Math.floor((value || 0) * bonus.multiplier)
   })
   return result
 }
@@ -260,6 +295,8 @@ export function checkAchievements(state: GameState): GameState {
           currentProgress = uniqueAnimals.size
         } else if (achievement.id === 'empire_builder') {
           currentProgress = newState.plots.filter(p => p.type === 'building').length
+        } else if (achievement.id.startsWith('lucky_')) {
+          currentProgress = newState.criticalHarvestCount
         }
         break
     }

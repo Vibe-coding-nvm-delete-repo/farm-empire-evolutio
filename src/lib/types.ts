@@ -130,4 +130,6 @@ export interface GameState {
   prestigeMultiplier: number
   startTime: number
   lastSaveTime: number
+  luckLevel: number
+  criticalHarvestCount: number
 }
