@@ -74,7 +74,7 @@ export interface Tech {
 
 export interface PlotState {
   id: string
-  type: 'empty' | 'crop' | 'building' | 'animal'
+  type: 'empty' | 'crop' | 'building' | 'animal' | 'locked'
   cropId?: string
   buildingId?: string
   animalId?: string

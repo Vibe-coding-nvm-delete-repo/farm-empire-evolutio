@@ -35,13 +35,22 @@ const PlotCard = memo(({ plot, now, onPlotClick }: PlotCardProps) => {
   const isBuilding = plot.type === 'building'
   const isAnimal = plot.type === 'animal'
   const isEmpty = plot.type === 'empty'
+  const isLocked = plot.type === 'locked'
 
   let content: React.ReactNode = null
   let progress = 0
   let tooltipText = ''
   let statusBadge: React.ReactNode = null
 
-  if (plot.type === 'crop' && plot.cropId) {
+  if (isLocked) {
+    content = (
+      <div className="flex flex-col items-center gap-1 opacity-40">
+        <span className="text-4xl">🔒</span>
+        <span className="text-xs font-semibold text-center">Locked</span>
+      </div>
+    )
+    tooltipText = 'Unlock more plots through achievements and progression'
+  } else if (plot.type === 'crop' && plot.cropId) {
     const crop = getCropById(plot.cropId)
     if (crop) {
       content = (
@@ -145,22 +154,24 @@ const PlotCard = memo(({ plot, now, onPlotClick }: PlotCardProps) => {
         >
           <Card
             className={`
-              aspect-square p-2 cursor-pointer transition-all duration-200
-              ${isEmpty ? 'bg-primary/5 hover:bg-primary/10 border-dashed border-2' : 'bg-card hover:shadow-lg hover:scale-105'}
+              aspect-square p-2 transition-all duration-200
+              ${isLocked ? 'bg-muted/30 border-muted cursor-not-allowed opacity-50' : 'cursor-pointer'}
+              ${isEmpty && !isLocked ? 'bg-primary/5 hover:bg-primary/10 border-dashed border-2' : ''}
+              ${!isEmpty && !isLocked ? 'bg-card hover:shadow-lg hover:scale-105' : ''}
               ${isReady ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background animate-pulse' : ''}
               ${isGrowing ? 'border-primary/30' : ''}
             `}
-            onClick={handleClick}
+            onClick={isLocked ? undefined : handleClick}
           >
             <div className="h-full flex flex-col justify-between">
-              {isEmpty ? (
+              {isEmpty && !isLocked ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Plus className="w-8 h-8 text-primary/40" weight="bold" />
                 </div>
               ) : (
                 <>
                   <motion.div 
-                    className={`flex-1 flex items-center justify-center ${isGrowing ? 'animate-sway' : ''}`}
+                    className={`flex-1 flex items-center justify-center ${isGrowing && !isLocked ? 'animate-sway' : ''}`}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3, ease: 'backOut' }}

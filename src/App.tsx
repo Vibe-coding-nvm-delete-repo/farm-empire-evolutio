@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useGameState } from '@/hooks/useGameState'
 import { Resources } from '@/lib/types'
 import { ResourceBar } from '@/components/ResourceBar'
+import { ProgressBar } from '@/components/ProgressBar'
 import { StatsOverview } from '@/components/StatsOverview'
 import { FarmGrid } from '@/components/FarmGrid'
 import { QueuePanel } from '@/components/QueuePanel'
@@ -51,6 +52,7 @@ import {
   rollHarvestBonus,
   applyHarvestBonus,
 } from '@/lib/gameEngine'
+import { TECH_TREE, ACHIEVEMENTS } from '@/lib/gameData'
 import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell, Book } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 
@@ -690,6 +692,14 @@ function AppContent() {
             <p className="text-center text-xs text-muted-foreground font-medium">Build your ultimate farming dynasty</p>
           </div>
           <ResourceBar resources={gameState.resources} />
+          <div className="mt-3">
+            <ProgressBar 
+              achievementsCompleted={gameState.achievements.length}
+              totalAchievements={ACHIEVEMENTS.length}
+              techsUnlocked={gameState.techs.length}
+              totalTechs={TECH_TREE.length}
+            />
+          </div>
         </div>
       </div>
 

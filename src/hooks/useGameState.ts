@@ -5,9 +5,9 @@ import { INITIAL_RESOURCES } from '@/lib/gameData'
 
 const INITIAL_GAME_STATE: GameState = {
   resources: INITIAL_RESOURCES,
-  plots: Array.from({ length: 20 }, (_, i) => ({
+  plots: Array.from({ length: 30 }, (_, i) => ({
     id: `plot-${i}`,
-    type: 'empty' as const,
+    type: i < 15 ? 'empty' as const : 'locked' as const,
     level: 1,
   })),
   queue: [],
