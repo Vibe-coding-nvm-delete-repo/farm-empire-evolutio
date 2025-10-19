@@ -1,46 +1,38 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Bell, X, Trophy, TreeStructure, Sparkle } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
-
-export type Notification = {
-  id: string
-  type: 'achievement' | 'tech' | 'progression' | 'info' | 'warning'
-  title: string
-  message: string
-  timestamp: number
-  read: boolean
-  icon?: string
-}
+import { useNotifications, type Notification } from '@/contexts/NotificationsContext'
+import { useKV } from '@github/spark/hooks'
 
 export function NotificationsPanel() {
-  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
+  const { notifications } = useNotifications()
+  const [, setNotificationsKV] = useKV<Notification[]>('notifications', [])
   const [open, setOpen] = useState(false)
 
   const unreadCount = (notifications || []).filter(n => !n.read).length
 
   const markAsRead = (id: string) => {
-    setNotifications(current => 
+    setNotificationsKV(current => 
       (current || []).map(n => n.id === id ? { ...n, read: true } : n)
     )
   }
 
   const markAllAsRead = () => {
-    setNotifications(current => 
+    setNotificationsKV(current => 
       (current || []).map(n => ({ ...n, read: true }))
     )
   }
 
   const clearAll = () => {
-    setNotifications([])
+    setNotificationsKV([])
   }
 
   const deleteNotification = (id: string) => {
-    setNotifications(current => (current || []).filter(n => n.id !== id))
+    setNotificationsKV(current => (current || []).filter(n => n.id !== id))
   }
 
   const getIcon = (notification: Notification) => {
@@ -164,22 +156,4 @@ export function NotificationsPanel() {
       </SheetContent>
     </Sheet>
   )
-}
-
-export function useNotifications() {
-  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
-
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-    setNotifications(current => [
-      {
-        ...notification,
-        id: `notif-${Date.now()}-${Math.random()}`,
-        timestamp: Date.now(),
-        read: false,
-      },
-      ...(current || []),
-    ])
-  }
-
-  return { notifications, addNotification }
 }

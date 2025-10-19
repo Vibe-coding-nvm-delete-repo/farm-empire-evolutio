@@ -17,7 +17,8 @@ import { AchievementPopup } from '@/components/AchievementPopup'
 import { HarvestRollAnimation } from '@/components/HarvestRollAnimation'
 import { ResourceCenter } from '@/components/ResourceCenter'
 import { ResourceHelpBanner } from '@/components/ResourceHelpBanner'
-import { NotificationsPanel, useNotifications } from '@/components/NotificationsPanel'
+import { NotificationsPanel } from '@/components/NotificationsPanel'
+import { NotificationsProvider, useNotifications } from '@/contexts/NotificationsContext'
 import { UnlockNotificationManager } from '@/components/UnlockNotification'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -50,7 +51,7 @@ import {
 import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell, Book } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 
-function App() {
+function AppContent() {
   const [gameState, setGameState] = useGameState()
   const { addNotification } = useNotifications()
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null)
@@ -805,6 +806,14 @@ function App() {
         onPlaceBuilding={handlePlaceBuilding}
       />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <NotificationsProvider>
+      <AppContent />
+    </NotificationsProvider>
   )
 }
 
