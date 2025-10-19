@@ -181,7 +181,7 @@ function App() {
     }
     
     setPreviousAchievements(gameState.achievements)
-  }, [gameState.achievements, addNotification])
+  }, [gameState.achievements.length, gameState.achievements, previousAchievements.length])
 
   useEffect(() => {
     const newTechs = gameState.techs.filter(
@@ -209,7 +209,7 @@ function App() {
     }
     
     setPreviousTechs(gameState.techs)
-  }, [gameState.techs, addNotification])
+  }, [gameState.techs.length, gameState.techs, previousTechs.length])
 
   useEffect(() => {
     if (currentTab === 'log') {

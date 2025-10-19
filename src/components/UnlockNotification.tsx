@@ -31,7 +31,7 @@ export function UnlockNotification({
     }, duration)
 
     return () => clearTimeout(timer)
-  }, [duration, onClose])
+  }, [duration])
 
   const handleClose = () => {
     setIsExiting(true)
@@ -138,19 +138,25 @@ type QueuedUnlock = {
 export function UnlockNotificationManager({ unlocks }: { unlocks: QueuedUnlock[] }) {
   const [currentUnlock, setCurrentUnlock] = useState<QueuedUnlock | null>(null)
   const [queue, setQueue] = useState<QueuedUnlock[]>([])
+  const [processedIds, setProcessedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (unlocks.length > 0) {
-      setQueue(prev => [...prev, ...unlocks.filter(u => !prev.some(p => p.id === u.id))])
+      const newUnlocks = unlocks.filter(u => !processedIds.has(u.id))
+      if (newUnlocks.length > 0) {
+        setQueue(prev => [...prev, ...newUnlocks])
+        setProcessedIds(prev => new Set([...prev, ...newUnlocks.map(u => u.id)]))
+      }
     }
   }, [unlocks])
 
   useEffect(() => {
     if (!currentUnlock && queue.length > 0) {
-      setCurrentUnlock(queue[0])
+      const nextUnlock = queue[0]
+      setCurrentUnlock(nextUnlock)
       setQueue(prev => prev.slice(1))
     }
-  }, [currentUnlock, queue])
+  }, [currentUnlock, queue.length])
 
   const handleClose = () => {
     setCurrentUnlock(null)
