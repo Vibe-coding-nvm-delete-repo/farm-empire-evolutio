@@ -16,6 +16,8 @@ import { AchievementPopup } from '@/components/AchievementPopup'
 import { HarvestRollAnimation } from '@/components/HarvestRollAnimation'
 import { ResourceCenter } from '@/components/ResourceCenter'
 import { ResourceHelpBanner } from '@/components/ResourceHelpBanner'
+import { NotificationsPanel, useNotifications } from '@/components/NotificationsPanel'
+import { UnlockNotificationManager } from '@/components/UnlockNotification'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
@@ -56,8 +58,12 @@ function App() {
   const [hasSeenTutorial, setHasSeenTutorial] = useKV<boolean>('tutorial-completed', false)
   const [achievementPopup, setAchievementPopup] = useState<any>(null)
   const [previousAchievements, setPreviousAchievements] = useState<string[]>([])
+  const [previousTechs, setPreviousTechs] = useState<string[]>([])
   const [recentLogCount, setRecentLogCount] = useState(0)
   const [harvestRoll, setHarvestRoll] = useState<{ rollValue: number, isCritical: boolean, position: { x: number, y: number } } | null>(null)
+  const [unlockQueue, setUnlockQueue] = useState<Array<{ id: string, type: 'achievement' | 'tech' | 'progression', title: string, description: string, icon?: string }>>([])
+  
+  const { addNotification } = useNotifications()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -144,21 +150,66 @@ function App() {
       const latestAchievement = newAchievements[0]
       const achievementData = getAchievementById(latestAchievement)
       if (achievementData) {
-        setAchievementPopup({
-          name: achievementData.name,
-          description: achievementData.description,
-          tier: achievementData.tier,
-          icon: achievementData.category === 'harvest' ? '🌾' : 
+        const achievementIcon = achievementData.category === 'harvest' ? '🌾' : 
                 achievementData.category === 'wealth' ? '💰' :
                 achievementData.category === 'tech' ? '🔬' :
                 achievementData.category === 'animals' ? '🐄' :
                 achievementData.category === 'automation' ? '🏭' : '⭐'
+        
+        setAchievementPopup({
+          name: achievementData.name,
+          description: achievementData.description,
+          tier: achievementData.tier,
+          icon: achievementIcon
         })
+        
+        addNotification({
+          type: 'achievement',
+          title: achievementData.name,
+          message: achievementData.description,
+          icon: achievementIcon
+        })
+        
+        setUnlockQueue(prev => [...prev, {
+          id: `ach-${latestAchievement}-${Date.now()}`,
+          type: 'achievement',
+          title: achievementData.name,
+          description: achievementData.description,
+          icon: achievementIcon
+        }])
       }
     }
     
     setPreviousAchievements(gameState.achievements)
-  }, [gameState.achievements])
+  }, [gameState.achievements, addNotification])
+
+  useEffect(() => {
+    const newTechs = gameState.techs.filter(
+      t => !previousTechs.includes(t)
+    )
+    
+    if (newTechs.length > 0 && previousTechs.length > 0) {
+      newTechs.forEach(techId => {
+        const tech = getTechById(techId)
+        if (tech) {
+          addNotification({
+            type: 'tech',
+            title: `Researched: ${tech.name}`,
+            message: tech.description,
+          })
+          
+          setUnlockQueue(prev => [...prev, {
+            id: `tech-${techId}-${Date.now()}`,
+            type: 'tech',
+            title: tech.name,
+            description: tech.description,
+          }])
+        }
+      })
+    }
+    
+    setPreviousTechs(gameState.techs)
+  }, [gameState.techs, addNotification])
 
   useEffect(() => {
     if (currentTab === 'log') {
@@ -573,6 +624,8 @@ function App() {
     <div className="min-h-screen bg-background">
       <Toaster position="bottom-right" richColors closeButton />
       
+      <UnlockNotificationManager unlocks={unlockQueue} />
+      
       {harvestRoll && (
         <HarvestRollAnimation
           rollValue={harvestRoll.rollValue}
@@ -599,9 +652,15 @@ function App() {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto p-4 max-w-[1600px]">
           <div className="mb-3">
-            <h1 className="text-4xl font-bold text-center mb-1 text-primary flex items-center justify-center gap-2">
-              🌾 Farm Empire
-            </h1>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex-1" />
+              <h1 className="text-4xl font-bold text-center text-primary flex items-center gap-2">
+                🌾 Farm Empire
+              </h1>
+              <div className="flex-1 flex justify-end">
+                <NotificationsPanel />
+              </div>
+            </div>
             <p className="text-center text-sm text-muted-foreground">Build the ultimate farming dynasty</p>
           </div>
           <ResourceBar resources={gameState.resources} />
