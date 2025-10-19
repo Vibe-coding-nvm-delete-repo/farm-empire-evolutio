@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useGameState } from '@/hooks/useGameState'
 import { ResourceBar } from '@/components/ResourceBar'
 import { FarmGrid } from '@/components/FarmGrid'
@@ -61,11 +61,12 @@ function App() {
       setGameState((current) => {
         if (!current) return gameState
         
-        let updated = applyTechEffects(current)
-        const modifiers = (updated as any)._modifiers
         const now = Date.now()
+        let hasChanges = false
+        let updated = { ...current }
+        const modifiers = (applyTechEffects(current) as any)._modifiers
 
-        updated.plots = updated.plots.map(plot => {
+        const newPlots = updated.plots.map(plot => {
           if (plot.type === 'building' && plot.buildingId) {
             const building = getBuildingById(plot.buildingId)
             if (building && building.production && Object.keys(building.production).length > 0) {
@@ -73,6 +74,7 @@ function App() {
               const elapsed = now - lastProduction
               
               if (elapsed >= building.productionRate) {
+                hasChanges = true
                 const productionAmount = building.production
                 let actualProduction = { ...productionAmount }
                 
@@ -101,6 +103,7 @@ function App() {
               const timeSinceFed = now - lastFed
               
               if (timeSinceProduction >= productionInterval && timeSinceFed < animal.feedInterval * 2) {
+                hasChanges = true
                 const production = calculateAnimalProduction(animal.production, modifiers)
                 updated.resources = addResources(updated.resources, production)
                 updated.totalAnimalProducts++
@@ -108,6 +111,7 @@ function App() {
               }
               
               if (timeSinceFed >= animal.feedInterval && canAfford(updated.resources, animal.feedCost)) {
+                hasChanges = true
                 updated.resources = deductResources(updated.resources, animal.feedCost)
                 return { ...plot, lastFed: now } as any
               }
@@ -117,13 +121,16 @@ function App() {
           return plot
         })
 
+        if (!hasChanges) return current
+
+        updated.plots = newPlots
         updated = checkAchievements(updated)
         return updated
       })
     }, 100)
 
     return () => clearInterval(interval)
-  }, [gameState, setGameState])
+  }, [setGameState])
 
   useEffect(() => {
     const newAchievements = gameState.achievements.filter(
@@ -162,7 +169,11 @@ function App() {
     }
   }, [gameState.activityLog.length])
 
-  const handlePlotClick = (plotId: string, event: React.MouseEvent) => {
+  const modifiers = useMemo(() => {
+    return (applyTechEffects(gameState) as any)._modifiers
+  }, [gameState.techs, gameState.prestigeMultiplier])
+
+  const handlePlotClick = useCallback((plotId: string, event: React.MouseEvent) => {
     const plot = gameState.plots.find(p => p.id === plotId)
     if (!plot) return
 
@@ -232,9 +243,9 @@ function App() {
         }
       }
     }
-  }
+  }, [gameState, modifiers, setGameState, setHarvestRoll, setSelectedPlotId, setPlacementDialogOpen])
 
-  const handlePlaceCrop = (cropId: string) => {
+  const handlePlaceCrop = useCallback((cropId: string) => {
     if (!selectedPlotId) return
 
     const crop = getCropById(cropId)
@@ -277,9 +288,9 @@ function App() {
     toast.success(`Planted ${crop.name}!`, { duration: 1500 })
     setSelectedPlotId(null)
     setPlacementDialogOpen(false)
-  }
+  }, [selectedPlotId, gameState, modifiers, setGameState, setSelectedPlotId, setPlacementDialogOpen])
 
-  const handlePlaceAnimal = (animalId: string) => {
+  const handlePlaceAnimal = useCallback((animalId: string) => {
     if (!selectedPlotId) return
 
     const animal = getAnimalById(animalId)
@@ -317,9 +328,9 @@ function App() {
     toast.success(`Purchased ${animal.name}!`, { duration: 1500 })
     setSelectedPlotId(null)
     setPlacementDialogOpen(false)
-  }
+  }, [selectedPlotId, gameState, setGameState, setSelectedPlotId, setPlacementDialogOpen])
 
-  const handlePlaceBuilding = (buildingId: string) => {
+  const handlePlaceBuilding = useCallback((buildingId: string) => {
     if (!selectedPlotId) return
 
     const building = getBuildingById(buildingId)
@@ -357,9 +368,9 @@ function App() {
     toast.success(`Built ${building.name}!`, { duration: 1500 })
     setSelectedPlotId(null)
     setPlacementDialogOpen(false)
-  }
+  }, [selectedPlotId, gameState, setGameState, setSelectedPlotId, setPlacementDialogOpen])
 
-  const handlePurchaseTech = (techId: string) => {
+  const handlePurchaseTech = useCallback((techId: string) => {
     const tech = getTechById(techId)
     if (!tech) return
 
@@ -390,9 +401,9 @@ function App() {
       description: tech.description,
       duration: 2500,
     })
-  }
+  }, [gameState, setGameState])
 
-  const handleCancelTask = (taskId: string) => {
+  const handleCancelTask = useCallback((taskId: string) => {
     setGameState(current => {
       if (!current) return gameState
       
@@ -402,22 +413,28 @@ function App() {
       }
     })
     toast.info('Task cancelled', { duration: 1000 })
-  }
+  }, [gameState, setGameState])
 
-  const unlockedCrops = getUnlockedCrops(gameState.techs)
-  const unlockedAnimals = getUnlockedAnimals(gameState.techs)
-  const unlockedBuildings = getUnlockedBuildings(gameState.techs)
-  const availableTechs = getAvailableTechs(gameState.techs)
+  const unlockedCrops = useMemo(() => getUnlockedCrops(gameState.techs), [gameState.techs])
+  const unlockedAnimals = useMemo(() => getUnlockedAnimals(gameState.techs), [gameState.techs])
+  const unlockedBuildings = useMemo(() => getUnlockedBuildings(gameState.techs), [gameState.techs])
+  const availableTechs = useMemo(() => getAvailableTechs(gameState.techs), [gameState.techs])
 
-  const readyToHarvest = gameState.plots.filter(
-    p => p.type === 'crop' && p.completesAt && p.completesAt <= Date.now()
-  ).length
+  const readyToHarvest = useMemo(() => 
+    gameState.plots.filter(
+      p => p.type === 'crop' && p.completesAt && p.completesAt <= Date.now()
+    ).length,
+    [gameState.plots]
+  )
 
-  const newAchievements = gameState.achievements.length - previousAchievements.filter(
-    a => gameState.achievements.includes(a)
-  ).length
+  const newAchievements = useMemo(() => 
+    gameState.achievements.length - previousAchievements.filter(
+      a => gameState.achievements.includes(a)
+    ).length,
+    [gameState.achievements, previousAchievements]
+  )
 
-  const achievementProgress: Record<string, number> = {
+  const achievementProgress = useMemo<Record<string, number>>(() => ({
     first_harvest: gameState.totalHarvested,
     harvest_10: gameState.totalHarvested,
     harvest_50: gameState.totalHarvested,
@@ -448,7 +465,8 @@ function App() {
     lucky_10: gameState.criticalHarvestCount,
     lucky_50: gameState.criticalHarvestCount,
     lucky_100: gameState.criticalHarvestCount,
-  }
+  }), [gameState.totalHarvested, gameState.totalGoldEarned, gameState.techs.length, 
+      gameState.plots, gameState.totalAnimalProducts, gameState.criticalHarvestCount])
 
   return (
     <div className="min-h-screen bg-background">

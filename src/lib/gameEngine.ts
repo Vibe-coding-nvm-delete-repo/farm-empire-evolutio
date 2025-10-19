@@ -1,5 +1,6 @@
 import { GameState, Resources, PlotState, ActivityLogEntry } from './types'
 import { CROPS, BUILDINGS, TECH_TREE, ACHIEVEMENTS, ANIMALS } from './gameData'
+import { memoize } from './performance'
 
 export function canAfford(resources: Resources, cost: Partial<Resources>): boolean {
   return Object.entries(cost).every(([key, value]) => {
@@ -23,48 +24,48 @@ export function addResources(resources: Resources, gain: Partial<Resources>): Re
   return newResources
 }
 
-export function getCropById(id: string) {
+export const getCropById = memoize((id: string) => {
   return CROPS.find(c => c.id === id)
-}
+})
 
-export function getAnimalById(id: string) {
+export const getAnimalById = memoize((id: string) => {
   return ANIMALS.find(a => a.id === id)
-}
+})
 
-export function getBuildingById(id: string) {
+export const getBuildingById = memoize((id: string) => {
   return BUILDINGS.find(b => b.id === id)
-}
+})
 
-export function getTechById(id: string) {
+export const getTechById = memoize((id: string) => {
   return TECH_TREE.find(t => t.id === id)
-}
+})
 
-export function getAchievementById(id: string) {
+export const getAchievementById = memoize((id: string) => {
   return ACHIEVEMENTS.find(a => a.id === id)
-}
+})
 
-export function getUnlockedCrops(techs: string[]) {
+export const getUnlockedCrops = memoize((techs: string[]) => {
   return CROPS.map(crop => ({
     ...crop,
     unlocked: !crop.requiredTech || techs.includes(crop.requiredTech)
   })).filter(c => c.unlocked)
-}
+}, (techs) => techs.sort().join(','))
 
-export function getUnlockedAnimals(techs: string[]) {
+export const getUnlockedAnimals = memoize((techs: string[]) => {
   return ANIMALS.map(animal => ({
     ...animal,
     unlocked: !animal.requiredTech || techs.includes(animal.requiredTech)
   })).filter(a => a.unlocked)
-}
+}, (techs) => techs.sort().join(','))
 
-export function getUnlockedBuildings(techs: string[]) {
+export const getUnlockedBuildings = memoize((techs: string[]) => {
   return BUILDINGS.map(building => ({
     ...building,
     unlocked: !building.requiredTech || techs.includes(building.requiredTech)
   })).filter(b => b.unlocked)
-}
+}, (techs) => techs.sort().join(','))
 
-export function getAvailableTechs(purchasedTechs: string[]) {
+export const getAvailableTechs = memoize((purchasedTechs: string[]) => {
   return TECH_TREE.map(tech => {
     const prereqsMet = tech.prerequisites.every(prereq => purchasedTechs.includes(prereq))
     const alreadyPurchased = purchasedTechs.includes(tech.id)
@@ -74,7 +75,7 @@ export function getAvailableTechs(purchasedTechs: string[]) {
       purchased: alreadyPurchased,
     }
   }).filter(t => t.unlocked || t.purchased)
-}
+}, (techs) => techs.sort().join(','))
 
 export function applyTechEffects(state: GameState): GameState {
   let growthMultiplier = 1
