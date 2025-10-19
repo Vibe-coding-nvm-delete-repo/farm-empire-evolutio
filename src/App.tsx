@@ -54,7 +54,7 @@ function App() {
   const [achievementPopup, setAchievementPopup] = useState<any>(null)
   const [previousAchievements, setPreviousAchievements] = useState<string[]>([])
   const [recentLogCount, setRecentLogCount] = useState(0)
-  const [harvestRoll, setHarvestRoll] = useState<{ rollValue: number, isCritical: boolean } | null>(null)
+  const [harvestRoll, setHarvestRoll] = useState<{ rollValue: number, isCritical: boolean, position: { x: number, y: number } } | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -162,7 +162,7 @@ function App() {
     }
   }, [gameState.activityLog.length])
 
-  const handlePlotClick = (plotId: string) => {
+  const handlePlotClick = (plotId: string, event: React.MouseEvent) => {
     const plot = gameState.plots.find(p => p.id === plotId)
     if (!plot) return
 
@@ -178,7 +178,12 @@ function App() {
         const harvestBonus = rollHarvestBonus(gameState.luckLevel)
         const finalYield = applyHarvestBonus(baseYield, harvestBonus)
         
-        setHarvestRoll({ rollValue: harvestBonus.rollValue, isCritical: harvestBonus.isCritical })
+        const clickPosition = {
+          x: event.clientX,
+          y: event.clientY
+        }
+        
+        setHarvestRoll({ rollValue: harvestBonus.rollValue, isCritical: harvestBonus.isCritical, position: clickPosition })
         
         setGameState(current => {
           if (!current) return gameState
@@ -453,6 +458,7 @@ function App() {
         <HarvestRollAnimation
           rollValue={harvestRoll.rollValue}
           isCritical={harvestRoll.isCritical}
+          position={harvestRoll.position}
           onComplete={() => setHarvestRoll(null)}
         />
       )}

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 
 interface FarmGridProps {
   plots: PlotState[]
-  onPlotClick: (plotId: string) => void
+  onPlotClick: (plotId: string, event: React.MouseEvent) => void
 }
 
 export function FarmGrid({ plots, onPlotClick }: FarmGridProps) {
@@ -121,7 +121,7 @@ export function FarmGrid({ plots, onPlotClick }: FarmGridProps) {
                     ${isReady ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background' : ''}
                     ${isGrowing ? 'border-primary/30' : ''}
                   `}
-                  onClick={() => onPlotClick(plot.id)}
+                  onClick={(e) => onPlotClick(plot.id, e)}
                 >
                   <div className="h-full flex flex-col justify-between">
                     {isEmpty ? (

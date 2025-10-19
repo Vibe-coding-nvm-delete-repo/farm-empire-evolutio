@@ -1,52 +1,54 @@
 import { motion } from 'framer-motion'
-import { Sparkle, TrendUp } from '@phosphor-icons/react'
+import { Sparkle } from '@phosphor-icons/react'
 
 interface HarvestRollAnimationProps {
   rollValue: number
   isCritical: boolean
   onComplete: () => void
+  position: { x: number; y: number }
 }
 
-export function HarvestRollAnimation({ rollValue, isCritical, onComplete }: HarvestRollAnimationProps) {
+export function HarvestRollAnimation({ rollValue, isCritical, onComplete, position }: HarvestRollAnimationProps) {
   return (
     <motion.div
-      initial={{ scale: 0, rotate: -180, opacity: 0 }}
-      animate={{ scale: 1, rotate: 0, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      transition={{ duration: 0.4, ease: 'backOut' }}
-      onAnimationComplete={onComplete}
-      className={`fixed inset-0 flex items-center justify-center z-50 pointer-events-none`}
+      initial={{ scale: 0, y: 20, opacity: 0 }}
+      animate={{ scale: 1, y: 0, opacity: 1 }}
+      exit={{ scale: 0, y: -20, opacity: 0 }}
+      transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+      onAnimationComplete={() => {
+        setTimeout(onComplete, 1200)
+      }}
+      style={{
+        position: 'fixed',
+        left: position.x,
+        top: position.y,
+        transform: 'translate(-50%, -120%)',
+        zIndex: 100,
+        pointerEvents: 'none',
+      }}
     >
       <motion.div
-        initial={{ y: 50 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.2 }}
-        className={`${
-          isCritical 
-            ? 'bg-gradient-to-br from-amber-500 via-yellow-400 to-orange-500 text-white shadow-2xl shadow-amber-500/50' 
+        animate={isCritical ? { rotate: [0, -2, 2, -2, 2, 0] } : {}}
+        transition={{ duration: 0.5, repeat: isCritical ? Infinity : 0, repeatDelay: 0.3 }}
+        className={`
+          ${isCritical 
+            ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white' 
+            : rollValue >= 125
+            ? 'bg-gradient-to-r from-green-400 to-emerald-400 text-white'
             : rollValue >= 100
-            ? 'bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-xl shadow-green-500/30'
-            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 shadow-lg'
-        } rounded-2xl px-8 py-6 flex flex-col items-center gap-2 border-4 ${
-          isCritical ? 'border-yellow-300 animate-pulse' : 'border-white/30'
-        }`}
+            ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground'
+            : 'bg-card/95 text-foreground border border-border'
+          }
+          rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-sm
+        `}
       >
-        <div className="flex items-center gap-2">
-          {isCritical ? (
-            <Sparkle weight="fill" className="w-8 h-8 animate-spin" />
-          ) : rollValue >= 100 ? (
-            <TrendUp weight="bold" className="w-7 h-7" />
-          ) : null}
-          <span className="text-5xl font-bold font-numeric">{rollValue}%</span>
-          {isCritical ? (
-            <Sparkle weight="fill" className="w-8 h-8 animate-spin" style={{ animationDirection: 'reverse' }} />
-          ) : rollValue >= 100 ? (
-            <TrendUp weight="bold" className="w-7 h-7" />
-          ) : null}
-        </div>
-        <p className="text-sm font-semibold tracking-wide">
-          {isCritical ? '🎉 CRITICAL HARVEST! 🎉' : rollValue >= 125 ? 'Lucky Harvest!' : rollValue >= 100 ? 'Good Harvest' : 'Standard Yield'}
-        </p>
+        {isCritical && (
+          <Sparkle weight="fill" className="w-3.5 h-3.5 animate-pulse" />
+        )}
+        <span className="text-lg font-bold font-numeric">{rollValue}%</span>
+        {isCritical && (
+          <span className="text-xs font-semibold">CRIT!</span>
+        )}
       </motion.div>
     </motion.div>
   )
