@@ -41,9 +41,9 @@ const RESOURCE_DESCRIPTIONS = {
   gold: 'Main currency for building structures and purchasing animals',
   seeds: 'Required to plant crops, gained from harvesting',
   water: 'Essential for crops, produced by Wells',
-  fertilizer: 'Needed for advanced crops, produced by Compost Heaps',
+  fertilizer: '🔥 HOW TO GET: Build a Compost Heap! Unlock "Composting" in Tech tab, then build it. Produces 2 fertilizer every 10s. Needed for corn, tomatoes, and advanced crops.',
   energy: 'Powers buildings and automation, from Windmills',
-  research: 'Unlocks technologies in the Tech Tree',
+  research: '🔥 HOW TO GET: 1) Build a Research Lab (available from start), OR 2) Harvest Tomatoes (unlock in Tech tab). Used to unlock technologies.',
   hay: 'Animal feed, from grain crops or Barns',
   milk: 'Produced by cows and goats, valuable commodity',
   eggs: 'Produced by chickens and ducks, steady income',
@@ -67,20 +67,35 @@ export function ResourceBar({ resources }: ResourceBarProps) {
               const description = RESOURCE_DESCRIPTIONS[key]
               const value = resources[key]
               
+              const isLow = (key === 'fertilizer' || key === 'research') && value < 5
+              
               return (
                 <Tooltip key={key} delayDuration={200}>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-help">
+                    <div className={`flex items-center gap-2 cursor-help relative ${isLow ? 'animate-pulse' : ''}`}>
                       <Icon className={`${color} w-4 h-4`} weight="fill" />
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground capitalize leading-tight">{key}</span>
-                        <span className="text-base font-semibold font-numeric leading-tight">{Math.floor(value)}</span>
+                        <span className={`text-base font-semibold font-numeric leading-tight ${isLow ? 'text-destructive' : ''}`}>
+                          {Math.floor(value)}
+                        </span>
                       </div>
+                      {isLow && (
+                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                        </span>
+                      )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="font-semibold capitalize mb-1">{key}</p>
-                    <p className="text-sm">{description}</p>
+                  <TooltipContent className="max-w-md">
+                    <p className="font-semibold capitalize mb-1 text-base">{key}</p>
+                    <p className="text-sm leading-relaxed">{description}</p>
+                    {isLow && (
+                      <p className="text-xs text-destructive font-bold mt-2 p-2 bg-destructive/10 rounded border border-destructive/20">
+                        ⚠️ LOW! Hover here for help getting more!
+                      </p>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               )

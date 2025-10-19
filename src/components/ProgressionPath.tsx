@@ -23,17 +23,44 @@ const MILESTONES: Milestone[] = [
     description: 'Plant and harvest your first crop',
     icon: '🌾',
     requirement: (gs) => gs.totalHarvested >= 1,
-    hint: 'Click an empty plot and plant Wheat',
+    hint: '👉 Click an empty plot and plant Wheat - it\'s free to start!',
+    tier: 1,
+  },
+  {
+    id: 'build_research_lab',
+    name: 'Get Research',
+    description: 'Build a Research Lab to generate research points',
+    icon: '🔬',
+    requirement: (gs) => gs.plots.some(p => p.type === 'building' && p.buildingId === 'research_lab'),
+    hint: '👉 Build a Research Lab! Click empty plot → Buildings tab → Research Lab (300 gold, 20 energy). It produces research points automatically!',
     tier: 1,
   },
   {
     id: 'tech_unlock',
-    name: 'Research Begins',
+    name: 'First Tech',
     description: 'Unlock your first technology',
-    icon: '🔬',
+    icon: '💡',
     requirement: (gs) => gs.techs.length >= 1,
-    hint: 'Harvest Tomatoes or unlock Root Crops in Tech',
+    hint: '👉 Go to Tech tab and unlock "Composting" or "Root Crops" using research points',
     tier: 1,
+  },
+  {
+    id: 'build_compost',
+    name: 'Get Fertilizer',
+    description: 'Build a Compost Heap to produce fertilizer',
+    icon: '♻️',
+    requirement: (gs) => gs.plots.some(p => p.type === 'building' && p.buildingId === 'compost'),
+    hint: '👉 Unlock "Composting" in Tech, then build a Compost Heap (80 gold, 5 water). It produces 2 fertilizer every 10 seconds!',
+    tier: 2,
+  },
+  {
+    id: 'automation_start',
+    name: 'Automation',
+    description: 'Build 3 production buildings',
+    icon: '🏭',
+    requirement: (gs) => gs.plots.filter(p => p.type === 'building').length >= 3,
+    hint: '👉 Build Wells, Compost Heaps, and Research Labs to automate resource production',
+    tier: 2,
   },
   {
     id: 'first_animal',
@@ -41,16 +68,7 @@ const MILESTONES: Milestone[] = [
     description: 'Purchase your first animal',
     icon: '🐔',
     requirement: (gs) => gs.plots.some(p => p.type === 'animal'),
-    hint: 'Unlock Animal Husbandry in Tech tab',
-    tier: 2,
-  },
-  {
-    id: 'automation_start',
-    name: 'Automation',
-    description: 'Build your first production building',
-    icon: '🏭',
-    requirement: (gs) => gs.plots.some(p => p.type === 'building'),
-    hint: 'Unlock buildings in Tech, then build a Well',
+    hint: '👉 Unlock "Animal Husbandry" in Tech tab, then buy a Chicken',
     tier: 2,
   },
   {
@@ -194,16 +212,27 @@ export function ProgressionPath({ gameState }: ProgressionPathProps) {
                       )}
                     </motion.div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[250px]">
-                    <div className="space-y-1">
-                      <p className="font-semibold">{milestone.name}</p>
-                      <p className="text-xs text-muted-foreground">{milestone.description}</p>
+                  <TooltipContent side="bottom" className="max-w-[280px]">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{milestone.icon}</span>
+                        <p className="font-bold text-base">{milestone.name}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{milestone.description}</p>
                       {!isCompleted && (
-                        <p className="text-xs text-primary font-medium mt-2">
-                          💡 {milestone.hint}
-                        </p>
+                        <div className="p-2 rounded bg-primary/10 border border-primary/30 mt-2">
+                          <p className="text-xs font-semibold text-primary mb-1">💡 HOW TO COMPLETE:</p>
+                          <p className="text-xs text-foreground leading-relaxed">
+                            {milestone.hint}
+                          </p>
+                        </div>
                       )}
-                      <Badge variant="outline" className="mt-1">
+                      {isCompleted && (
+                        <Badge variant="default" className="w-full justify-center">
+                          ✓ Completed!
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="mt-1 w-full justify-center">
                         Tier {milestone.tier}
                       </Badge>
                     </div>
@@ -215,15 +244,22 @@ export function ProgressionPath({ gameState }: ProgressionPathProps) {
         </div>
         
         {currentMilestone && (
-          <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
+          <div className="mt-4 p-4 rounded-lg bg-gradient-to-br from-accent/30 via-accent/20 to-accent/10 border-2 border-accent shadow-lg">
             <div className="flex items-start gap-3">
-              <span className="text-2xl">{currentMilestone.icon}</span>
+              <span className="text-3xl animate-bounce">{currentMilestone.icon}</span>
               <div className="flex-1">
-                <p className="font-semibold text-sm mb-1">Next Goal: {currentMilestone.name}</p>
-                <p className="text-xs text-muted-foreground mb-2">{currentMilestone.description}</p>
-                <div className="flex items-center gap-2 text-xs text-primary font-medium">
-                  <ArrowRight className="w-4 h-4" />
-                  {currentMilestone.hint}
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-bold text-base">🎯 Next Goal: {currentMilestone.name}</p>
+                  <Badge variant="default" className="animate-pulse">DO THIS NEXT</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{currentMilestone.description}</p>
+                <div className="p-3 rounded-md bg-background/80 border border-primary/30">
+                  <div className="flex items-start gap-2">
+                    <ArrowRight className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" weight="bold" />
+                    <p className="text-sm text-foreground font-medium leading-relaxed">
+                      {currentMilestone.hint}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

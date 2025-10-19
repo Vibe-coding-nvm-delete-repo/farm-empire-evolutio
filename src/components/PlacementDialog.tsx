@@ -195,15 +195,16 @@ export function PlacementDialog({
               {buildings.map((building) => {
                 const affordable = canAfford(resources, building.cost)
                 const hasProduction = building.production && Object.keys(building.production).length > 0
+                const isKeyBuilding = building.id === 'compost' || building.id === 'research_lab'
                 
                 return (
                   <TooltipProvider key={building.id}>
                     <Tooltip delayDuration={200}>
                       <TooltipTrigger asChild>
                         <Card
-                          className={`p-3 cursor-pointer transition-all ${
+                          className={`p-3 cursor-pointer transition-all relative ${
                             affordable ? 'hover:border-primary hover:shadow-md' : 'opacity-50 cursor-not-allowed'
-                          }`}
+                          } ${isKeyBuilding ? 'ring-2 ring-primary/40 shadow-lg' : ''}`}
                           onClick={() => {
                             if (affordable) {
                               onPlaceBuilding(building.id)
@@ -211,6 +212,11 @@ export function PlacementDialog({
                             }
                           }}
                         >
+                          {isKeyBuilding && (
+                            <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+                              ⭐ KEY
+                            </div>
+                          )}
                           <div className="flex items-start gap-2">
                             <span className="text-3xl">{building.icon}</span>
                             <div className="flex-1 min-w-0">
@@ -242,6 +248,16 @@ export function PlacementDialog({
                               <p><span className="font-semibold">Production:</span> {Object.entries(building.production!).map(([k, v]) => `${v} ${k}`).join(', ')}</p>
                               <p><span className="font-semibold">Rate:</span> Every {(building.productionRate / 1000).toFixed(0)}s</p>
                             </div>
+                          )}
+                          {isKeyBuilding && building.id === 'compost' && (
+                            <p className="text-xs font-bold text-primary mt-2 p-2 bg-primary/10 rounded">
+                              🔥 This produces FERTILIZER - essential for advanced crops!
+                            </p>
+                          )}
+                          {isKeyBuilding && building.id === 'research_lab' && (
+                            <p className="text-xs font-bold text-primary mt-2 p-2 bg-primary/10 rounded">
+                              🔥 This produces RESEARCH - essential for unlocking technologies!
+                            </p>
                           )}
                         </div>
                       </TooltipContent>

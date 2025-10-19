@@ -15,6 +15,7 @@ import { ProgressionPath } from '@/components/ProgressionPath'
 import { AchievementPopup } from '@/components/AchievementPopup'
 import { HarvestRollAnimation } from '@/components/HarvestRollAnimation'
 import { ResourceCenter } from '@/components/ResourceCenter'
+import { ResourceHelpBanner } from '@/components/ResourceHelpBanner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
@@ -524,6 +525,16 @@ function App() {
     [gameState.achievements, previousAchievements]
   )
 
+  const hasResearchLab = useMemo(() => 
+    gameState.plots.some(p => p.type === 'building' && p.buildingId === 'research_lab'),
+    [gameState.plots]
+  )
+
+  const hasCompostHeap = useMemo(() => 
+    gameState.plots.some(p => p.type === 'building' && p.buildingId === 'compost'),
+    [gameState.plots]
+  )
+
   const achievementProgress = useMemo<Record<string, number>>(() => ({
     first_harvest: gameState.totalHarvested,
     harvest_10: gameState.totalHarvested,
@@ -598,6 +609,12 @@ function App() {
       </div>
 
       <div className="container mx-auto p-4 max-w-[1600px]">
+        <ResourceHelpBanner 
+          resources={gameState.resources} 
+          hasResearchLab={hasResearchLab}
+          hasCompostHeap={hasCompostHeap}
+        />
+        
         <ProgressionPath gameState={gameState} />
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
