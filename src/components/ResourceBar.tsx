@@ -2,7 +2,8 @@ import { Resources } from '@/lib/types'
 import { Coin, Plant, Drop, Leaf, Lightning, Flask, Coffee, Egg, TShirt, Bag, Pizza } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { memo } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
+import { motion, useSpring, useTransform } from 'framer-motion'
 
 interface ResourceBarProps {
   resources: Resources
@@ -65,6 +66,21 @@ const ResourceItem = memo(({ resourceKey, value, isMain }: ResourceItemProps) =>
   const description = RESOURCE_DESCRIPTIONS[resourceKey]
   const isLow = isMain && (resourceKey === 'fertilizer' || resourceKey === 'research') && value < 5
   
+  const spring = useSpring(value, { damping: 20, stiffness: 100 })
+  const display = useTransform(spring, (current) => Math.floor(current))
+  const [displayValue, setDisplayValue] = useState(Math.floor(value))
+  
+  useEffect(() => {
+    spring.set(value)
+  }, [value, spring])
+  
+  useEffect(() => {
+    const unsubscribe = display.on('change', (latest) => {
+      setDisplayValue(latest)
+    })
+    return unsubscribe
+  }, [display])
+  
   return (
     <Tooltip delayDuration={200}>
       <TooltipTrigger asChild>
@@ -73,7 +89,7 @@ const ResourceItem = memo(({ resourceKey, value, isMain }: ResourceItemProps) =>
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground capitalize leading-tight">{resourceKey}</span>
             <span className={`text-base font-semibold font-numeric leading-tight ${isLow ? 'text-destructive' : ''}`}>
-              {Math.floor(value)}
+              {displayValue}
             </span>
           </div>
           {isLow && (

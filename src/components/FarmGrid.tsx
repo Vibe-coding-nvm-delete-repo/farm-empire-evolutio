@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useMemo, memo, useCallback } from 'react'
+import { motion } from 'framer-motion'
 
 interface FarmGridProps {
   plots: PlotState[]
@@ -136,53 +137,80 @@ const PlotCard = memo(({ plot, now, onPlotClick }: PlotCardProps) => {
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Card
-          className={`
-            aspect-square p-2 cursor-pointer transition-all
-            ${isEmpty ? 'bg-primary/5 hover:bg-primary/10 border-dashed border-2' : 'bg-card hover:shadow-lg hover:scale-105'}
-            ${isReady ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background' : ''}
-            ${isGrowing ? 'border-primary/30' : ''}
-          `}
-          onClick={handleClick}
+        <motion.div
+          layout
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
         >
-          <div className="h-full flex flex-col justify-between">
-            {isEmpty ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Plus className="w-8 h-8 text-primary/40" weight="bold" />
-              </div>
-            ) : (
-              <>
-                <div className={`flex-1 flex items-center justify-center ${isGrowing ? 'animate-sway' : ''}`}>
-                  {content}
+          <Card
+            className={`
+              aspect-square p-2 cursor-pointer transition-all duration-200
+              ${isEmpty ? 'bg-primary/5 hover:bg-primary/10 border-dashed border-2' : 'bg-card hover:shadow-lg hover:scale-105'}
+              ${isReady ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background animate-pulse' : ''}
+              ${isGrowing ? 'border-primary/30' : ''}
+            `}
+            onClick={handleClick}
+          >
+            <div className="h-full flex flex-col justify-between">
+              {isEmpty ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-primary/40" weight="bold" />
                 </div>
-                
-                {statusBadge && (
-                  <div className="flex justify-center mt-1">
-                    {statusBadge}
-                  </div>
-                )}
-                
-                {(isGrowing || isBuilding || isAnimal) && (
-                  <div className="mt-1 space-y-1">
-                    <Progress value={progress} className="h-1.5" />
-                    {isGrowing && plot.completesAt && (
-                      <div className="text-center text-xs font-semibold text-muted-foreground">
-                        {formatTime(plot.completesAt - now)}
+              ) : (
+                <>
+                  <motion.div 
+                    className={`flex-1 flex items-center justify-center ${isGrowing ? 'animate-sway' : ''}`}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3, ease: 'backOut' }}
+                  >
+                    {content}
+                  </motion.div>
+                  
+                  {statusBadge && (
+                    <motion.div 
+                      className="flex justify-center mt-1"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {statusBadge}
+                    </motion.div>
+                  )}
+                  
+                  {(isGrowing || isBuilding || isAnimal) && (
+                    <motion.div 
+                      className="mt-1 space-y-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.1 }}
+                    >
+                      <Progress value={progress} className="h-1.5 transition-all duration-300" />
+                      {isGrowing && plot.completesAt && (
+                        <div className="text-center text-xs font-semibold text-muted-foreground">
+                          {formatTime(plot.completesAt - now)}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                  {isReady && (
+                    <motion.div 
+                      className="mt-1 text-center"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 10, stiffness: 200 }}
+                    >
+                      <div className="text-xs font-bold text-green-600">
+                        ✨ READY ✨
                       </div>
-                    )}
-                  </div>
-                )}
-                {isReady && (
-                  <div className="mt-1 text-center">
-                    <div className="text-xs font-bold text-green-600">
-                      ✨ READY ✨
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </Card>
+                    </motion.div>
+                  )}
+                </>
+              )}
+            </div>
+          </Card>
+        </motion.div>
       </TooltipTrigger>
       <TooltipContent side="top">
         <p className="text-sm">{tooltipText}</p>

@@ -14,16 +14,18 @@ import { TutorialOverlay } from '@/components/TutorialOverlay'
 import { HelpButton } from '@/components/HelpButton'
 import { ChatBot } from '@/components/ChatBot'
 import { ProgressionPath } from '@/components/ProgressionPath'
-import { AchievementPopup } from '@/components/AchievementPopup'
+import { AchievementToastContainer } from '@/components/AchievementToastContainer'
 import { HarvestRollAnimation } from '@/components/HarvestRollAnimation'
 import { ResourceCenter } from '@/components/ResourceCenter'
 import { ResourceHelpBanner } from '@/components/ResourceHelpBanner'
 import { NotificationsPanel } from '@/components/NotificationsPanel'
 import { NotificationsProvider, useNotifications } from '@/contexts/NotificationsContext'
+import { SaveIndicator } from '@/components/SaveIndicator'
 import { UnlockNotificationManager } from '@/components/UnlockNotification'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Toaster, toast } from 'sonner'
+import { motion } from 'framer-motion'
 import {
   canAfford,
   deductResources,
@@ -53,14 +55,14 @@ import { Trophy, TreeStructure, Farm, ListBullets, Sparkle, Bell, Book } from '@
 import { useKV } from '@github/spark/hooks'
 
 function AppContent() {
-  const [gameState, setGameState] = useGameState()
+  const [gameState, setGameState, , saveInfo] = useGameState()
   const { addNotification } = useNotifications()
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null)
   const [bulkPlantRowIndex, setBulkPlantRowIndex] = useState<number | null>(null)
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false)
   const [currentTab, setCurrentTab] = useState('farm')
   const [hasSeenTutorial, setHasSeenTutorial] = useKV<boolean>('tutorial-completed', false)
-  const [achievementPopup, setAchievementPopup] = useState<any>(null)
+  const [achievementToasts, setAchievementToasts] = useState<Array<{ id: string, name: string, description: string, tier: number, icon?: string }>>([])
   const [previousAchievements, setPreviousAchievements] = useState<string[]>([])
   const [previousTechs, setPreviousTechs] = useState<string[]>([])
   const [recentLogCount, setRecentLogCount] = useState(0)
@@ -169,41 +171,43 @@ function AppContent() {
     )
     
     if (newAchievements.length > 0 && previousAchievements.length > 0) {
-      const latestAchievement = newAchievements[0]
-      const achievementData = getAchievementById(latestAchievement)
-      if (achievementData) {
-        const achievementIcon = achievementData.category === 'harvest' ? '🌾' : 
-                achievementData.category === 'wealth' ? '💰' :
-                achievementData.category === 'tech' ? '🔬' :
-                achievementData.category === 'animals' ? '🐄' :
-                achievementData.category === 'automation' ? '🏭' : '⭐'
-        
-        setAchievementPopup({
-          name: achievementData.name,
-          description: achievementData.description,
-          tier: achievementData.tier,
-          icon: achievementIcon
-        })
-        
-        addNotification({
-          type: 'achievement',
-          title: achievementData.name,
-          message: achievementData.description,
-          icon: achievementIcon
-        })
-        
-        setUnlockQueue(prev => [...prev, {
-          id: `ach-${latestAchievement}-${Date.now()}`,
-          type: 'achievement',
-          title: achievementData.name,
-          description: achievementData.description,
-          icon: achievementIcon
-        }])
-      }
+      newAchievements.forEach(achievementId => {
+        const achievementData = getAchievementById(achievementId)
+        if (achievementData) {
+          const achievementIcon = achievementData.category === 'harvest' ? '🌾' : 
+                  achievementData.category === 'wealth' ? '💰' :
+                  achievementData.category === 'tech' ? '🔬' :
+                  achievementData.category === 'animals' ? '🐄' :
+                  achievementData.category === 'automation' ? '🏭' : '⭐'
+          
+          setAchievementToasts(prev => [...prev, {
+            id: `ach-${achievementId}-${Date.now()}`,
+            name: achievementData.name,
+            description: achievementData.description,
+            tier: achievementData.tier,
+            icon: achievementIcon
+          }])
+          
+          addNotification({
+            type: 'achievement',
+            title: achievementData.name,
+            message: achievementData.description,
+            icon: achievementIcon
+          })
+          
+          setUnlockQueue(prev => [...prev, {
+            id: `ach-${achievementId}-${Date.now()}`,
+            type: 'achievement',
+            title: achievementData.name,
+            description: achievementData.description,
+            icon: achievementIcon
+          }])
+        }
+      })
     }
     
     setPreviousAchievements(gameState.achievements)
-  }, [gameState.achievements.length, gameState.achievements, previousAchievements.length])
+  }, [gameState.achievements.length, gameState.achievements, previousAchievements.length, addNotification])
 
   useEffect(() => {
     const newTechs = gameState.techs.filter(
@@ -648,19 +652,17 @@ function AppContent() {
       
       <UnlockNotificationManager unlocks={unlockQueue} />
       
+      <AchievementToastContainer 
+        achievements={achievementToasts}
+        onRemove={(id) => setAchievementToasts(prev => prev.filter(a => a.id !== id))}
+      />
+      
       {harvestRoll && (
         <HarvestRollAnimation
           rollValue={harvestRoll.rollValue}
           isCritical={harvestRoll.isCritical}
           position={harvestRoll.position}
           onComplete={() => setHarvestRoll(null)}
-        />
-      )}
-      
-      {achievementPopup && (
-        <AchievementPopup
-          achievement={achievementPopup}
-          onClose={() => setAchievementPopup(null)}
         />
       )}
       
@@ -675,7 +677,9 @@ function AppContent() {
         <div className="container mx-auto p-4 max-w-[1600px]">
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <div className="flex-1" />
+              <div className="flex-1 flex items-center gap-2">
+                <SaveIndicator isSaving={saveInfo.isSaving} lastSaved={saveInfo.lastSaved} />
+              </div>
               <h1 className="text-3xl font-bold text-center text-primary flex items-center gap-2">
                 🌾 Farm Empire
               </h1>
@@ -749,40 +753,76 @@ function AppContent() {
               </TabsList>
 
               <TabsContent value="farm" className="mt-0">
-                <FarmGrid 
-                  plots={gameState.plots} 
-                  onPlotClick={handlePlotClick}
-                  onCollectAll={handleCollectAll}
-                  onBulkPlantRow={handleBulkPlantRow}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <FarmGrid 
+                    plots={gameState.plots} 
+                    onPlotClick={handlePlotClick}
+                    onCollectAll={handleCollectAll}
+                    onBulkPlantRow={handleBulkPlantRow}
+                  />
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="tech" className="mt-0 bg-card rounded-lg border p-4">
-                <TechTree
-                  techs={availableTechs}
-                  researchPoints={gameState.resources.research}
-                  onPurchase={handlePurchaseTech}
-                  purchasedTechs={gameState.techs}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <TechTree
+                    techs={availableTechs}
+                    researchPoints={gameState.resources.research}
+                    onPurchase={handlePurchaseTech}
+                    purchasedTechs={gameState.techs}
+                  />
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="achievements" className="mt-0 bg-card rounded-lg border h-[600px]">
-                <AchievementsPanel
-                  completedAchievements={gameState.achievements}
-                  currentProgress={achievementProgress}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <AchievementsPanel
+                    completedAchievements={gameState.achievements}
+                    currentProgress={achievementProgress}
+                  />
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="progression" className="mt-0 h-[600px]">
-                <ProgressionSystem gameState={gameState} />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ProgressionSystem gameState={gameState} />
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="log" className="mt-0 h-[600px]">
-                <ActivityLog log={gameState.activityLog} />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ActivityLog log={gameState.activityLog} />
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="guide" className="mt-0 h-[600px]">
-                <ResourceCenter />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ResourceCenter />
+                </motion.div>
               </TabsContent>
             </Tabs>
           </div>

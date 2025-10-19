@@ -1,40 +1,38 @@
 # 🌾 Farm Empire - Build Your Agricultural Dynasty
 
-An immersive, highly-optimized farming simulation game where you grow crops, raise animals, research technologies, and expand your agricultural empire! Features TRUE AI-powered advisor, snappy animations, and deep strategic gameplay.
+An immersive, highly-optimized farming simulation game where you grow crops, raise animals, research technologies, and expand your agricultural empire! Features TRUE AI-powered advisor, silky-smooth animations, persistent save system, and deep strategic gameplay.
 
-## ✨ What's New - Major Performance & UX Overhaul!
+## ✨ Latest Update - Smooth Animations & Persistent Progress!
 
-### 🚀 Performance Improvements
-- **40-50% Faster Animations**: All interactions feel instant (150-250ms vs 300-500ms)
-- **20% Faster Game Loop**: 200ms update cycle for smoother gameplay
-- **Optimized Rendering**: Memoized components prevent unnecessary re-renders
-- **Instant Feedback**: Toast notifications display for only 1-2 seconds
+### 🎬 Buttery-Smooth Animations
+- **Enhanced Progress Bars**: 500ms smooth easing on all crop/animal/building progress
+- **Smooth Resource Counting**: Numbers animate up/down with spring physics
+- **Fluid Tab Transitions**: 200ms fade-in animations when switching tabs
+- **Animated Plot Cards**: Scale and fade effects when planting/harvesting
+- **Harvest Pulse Animation**: Ready crops pulse with a satisfying glow
+- **Micro-interactions**: Every button, hover, and click feels responsive
 
-### 🤖 TRUE AI Integration
-- **LLM-Powered Chatbot**: Ask ANYTHING and get specific, intelligent answers
-- **Game State Awareness**: AI knows your exact resources, unlocked content, and progression
-- **Precise Guidance**: Get exact costs, yields, and step-by-step instructions
-- **No Generic Responses**: Every answer is tailored to YOUR specific situation
-- [See Full Chatbot Guide](./CHATBOT_GUIDE.md)
+### 💾 True Persistent Progress
+- **Auto-Save Every 3s**: Your progress saves automatically and frequently
+- **Save Indicator**: See "Saving..." and "Saved ✓" status in header
+- **Faster Save**: 1s debounce (down from 2s) for quicker persistence
+- **Reload-Safe**: Refresh the page anytime - your farm persists!
+- **State Validation**: Prevents corrupted saves with validation layer
 
-### 📊 Stats Overview Dashboard (NEW!)
-- **6 Key Metrics** always visible at top of screen
-- Total Gold Earned • Total Harvests • Technologies • Achievements • Active Plots • Playtime
-- Beautiful card design with smooth animations
-- Detailed tooltips on hover
+### 🏆 Non-Intrusive Achievement Toasts
+- **Top-Right Notifications**: Achievements appear as elegant toasts near notifications
+- **Auto-Dismiss**: Fade out after 5 seconds automatically
+- **Stack Multiple**: Multiple achievements queue nicely
+- **Progress Bar**: Visual countdown shows time remaining
+- **One-Click Close**: X button for instant dismiss
+- **No Screen Blocking**: Keep playing while celebrating!
 
-### 🎉 Enhanced Celebrations
-- **Confetti Animations**: 40 colorful particles rain down on achievements
-- **Improved Unlock Notifications**: Shine effects, wobble animations, faster timing
-- **Better Harvest Rolls**: Glowing crits, rotating sparkles, clearer feedback
-
-### 🎨 UI Improvements
-- **Clearer Tab Design**: Icons above text, better active states, prominent badges
-- **Better Visual Hierarchy**: Stats → Resources → Help → Progression → Content
-- **Improved Tooltips**: More detailed with "HOW TO GET" callouts for tricky resources
-- **Smoother Animations**: Professional easing curves on all transitions
-
-[See All Improvements](./IMPROVEMENTS.md)
+### 🎨 Visual Polish
+- **Smooth Transitions**: All elements use optimized easing curves
+- **Floating Numbers**: Resource gains show as floating +values (coming soon)
+- **Better Button States**: Clear hover, active, and disabled states
+- **Refined Spacing**: Improved layout consistency throughout
+- **Professional Feel**: Every interaction feels intentional and polished
 
 ## 🎮 Core Gameplay
 
@@ -48,7 +46,7 @@ An immersive, highly-optimized farming simulation game where you grow crops, rai
 - **9 Animal Types**: Chickens, cows, sheep, pigs, goats, ducks, llamas, and more
 - **Passive Production**: Animals generate resources automatically
 - **Feed Management**: Keep animals fed for continuous production
-- **Progress Indicators**: See real-time production cycles
+- **Progress Indicators**: See real-time production cycles with smooth animations
 
 ### 🏭 Building & Automation
 - **12 Buildings**: Wells, windmills, research labs, compost heaps, solar panels, barns
@@ -69,6 +67,8 @@ All game progress automatically saves using the Spark KV store:
 - ✅ Activity history & notifications
 - ✅ Progression milestones
 - ✅ Animal feeding states & production timers
+- ✅ Auto-save every 3 seconds
+- ✅ Visual save indicator in header
 
 **Your farm persists forever** - refresh the page anytime!
 
@@ -97,16 +97,19 @@ Complete timestamped history of every action - harvests, purchases, unlocks, ach
 - ✅ **Resource Help Banner**: Shows exactly how to get low resources
 - ✅ **Comprehensive Guide**: Full game documentation in-app
 - ✅ **Detailed Tooltips**: Hover for information on everything
+- ✅ **Auto-Save**: Never lose progress with frequent auto-saves
+- ✅ **Save Indicator**: Always know your progress is safe
 
 ## 🎨 Design Philosophy
 
 Beautiful, minimalist interface with:
-- ⚡ **Lightning-fast animations** (150-250ms)
+- ⚡ **Silky-smooth animations** with spring physics
 - 🎨 **Nature-inspired color palette** (greens, ambers, earth tones)
-- ✨ **Smooth transitions** with professional easing
+- ✨ **Professional transitions** with optimized easing curves
 - 📱 **Responsive design** for all screen sizes
-- 💎 **Polished details** in every interaction
+- 💎 **Polished micro-interactions** in every detail
 - 🎯 **Clear visual hierarchy** guiding focus
+- 🔄 **Persistent progress** that never gets lost
 
 Typography:
 - **Fredoka** for friendly, approachable headings
@@ -131,6 +134,7 @@ Typography:
 - 🤖 **Use AI Advisor**: Ask "How do I get X?" for instant, specific help
 - ⚡ **Bulk Actions**: Use Collect All and row planting for efficiency
 - 🎲 **Luck Matters**: Invest in luck techs for bigger critical harvest bonuses
+- 💾 **Auto-Save**: Your progress saves every 3 seconds automatically!
 
 ## 🧪 Testing & Quality
 
@@ -139,6 +143,7 @@ Typography:
 - **Type Safety**: Full TypeScript coverage
 - **No Infinite Loops**: Careful dependency management
 - **Memory Efficient**: Memoization prevents leaks
+- **Save Validation**: Prevents data corruption
 
 ## 📚 Documentation
 

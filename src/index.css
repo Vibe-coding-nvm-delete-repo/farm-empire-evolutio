@@ -67,6 +67,9 @@
 
 * {
   scroll-behavior: smooth;
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 body {
@@ -94,6 +97,21 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-sway {
   animation: sway 3s ease-in-out infinite;
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(1.2);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 1s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -66,12 +66,18 @@ function validateGameState(state: any): GameState {
 export function useGameState() {
   const [persistedState, setPersistedState, deleteState] = useKV<GameState>('game-state', INITIAL_GAME_STATE)
   const [localState, setLocalState] = useState<GameState>(() => validateGameState(persistedState))
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<number>(Date.now())
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const lastSaveRef = useRef<string>('')
+  const isInitializedRef = useRef(false)
   
   useEffect(() => {
-    setLocalState(validateGameState(persistedState))
-  }, [])
+    if (!isInitializedRef.current && persistedState) {
+      setLocalState(validateGameState(persistedState))
+      isInitializedRef.current = true
+    }
+  }, [persistedState])
   
   const setState = useCallback((updater: GameState | ((prev: GameState) => GameState)) => {
     setLocalState((prevState) => {
@@ -82,26 +88,34 @@ export function useGameState() {
         clearTimeout(saveTimerRef.current)
       }
       
-      saveTimerRef.current = setTimeout(() => {
+      setIsSaving(true)
+      saveTimerRef.current = setTimeout(async () => {
         const stateStr = JSON.stringify(validated)
         if (stateStr !== lastSaveRef.current) {
           lastSaveRef.current = stateStr
-          setPersistedState(validated)
+          await setPersistedState(() => validated)
+          setLastSaved(Date.now())
+          setIsSaving(false)
+        } else {
+          setIsSaving(false)
         }
-      }, 2000)
+      }, 1000)
       
       return validated
     })
   }, [setPersistedState])
   
   useEffect(() => {
-    const saveInterval = setInterval(() => {
+    const saveInterval = setInterval(async () => {
       const stateStr = JSON.stringify(localState)
       if (stateStr !== lastSaveRef.current) {
+        setIsSaving(true)
         lastSaveRef.current = stateStr
-        setPersistedState(localState)
+        await setPersistedState(() => localState)
+        setLastSaved(Date.now())
+        setIsSaving(false)
       }
-    }, 5000)
+    }, 3000)
     
     return () => {
       clearInterval(saveInterval)
@@ -110,10 +124,10 @@ export function useGameState() {
       }
       const stateStr = JSON.stringify(localState)
       if (stateStr !== lastSaveRef.current) {
-        setPersistedState(localState)
+        setPersistedState(() => localState)
       }
     }
   }, [localState, setPersistedState])
   
-  return [localState, setState, deleteState] as const
+  return [localState, setState, deleteState, { isSaving, lastSaved }] as const
 }
