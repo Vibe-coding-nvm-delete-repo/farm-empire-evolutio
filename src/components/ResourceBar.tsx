@@ -2,6 +2,7 @@ import { Resources } from '@/lib/types'
 import { Coin, Plant, Drop, Leaf, Lightning, Flask, Coffee, Egg, TShirt, Bag, Pizza } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { memo } from 'react'
 
 interface ResourceBarProps {
   resources: Resources
@@ -52,7 +53,55 @@ const RESOURCE_DESCRIPTIONS = {
   meat: 'Produced by pigs, valuable food product',
 }
 
-export function ResourceBar({ resources }: ResourceBarProps) {
+interface ResourceItemProps {
+  resourceKey: keyof Resources
+  value: number
+  isMain?: boolean
+}
+
+const ResourceItem = memo(({ resourceKey, value, isMain }: ResourceItemProps) => {
+  const Icon = RESOURCE_ICONS[resourceKey]
+  const color = RESOURCE_COLORS[resourceKey]
+  const description = RESOURCE_DESCRIPTIONS[resourceKey]
+  const isLow = isMain && (resourceKey === 'fertilizer' || resourceKey === 'research') && value < 5
+  
+  return (
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <div className={`flex items-center gap-2 cursor-help relative ${isLow ? 'animate-pulse' : ''}`}>
+          <Icon className={`${color} w-4 h-4`} weight="fill" />
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground capitalize leading-tight">{resourceKey}</span>
+            <span className={`text-base font-semibold font-numeric leading-tight ${isLow ? 'text-destructive' : ''}`}>
+              {Math.floor(value)}
+            </span>
+          </div>
+          {isLow && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+            </span>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-md">
+        <p className="font-semibold capitalize mb-1 text-base">{resourceKey}</p>
+        <p className="text-sm leading-relaxed">{description}</p>
+        {isLow && (
+          <p className="text-xs text-destructive font-bold mt-2 p-2 bg-destructive/10 rounded border border-destructive/20">
+            ⚠️ LOW! Hover here for help getting more!
+          </p>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  )
+}, (prev, next) => {
+  return Math.floor(prev.value) === Math.floor(next.value) && prev.resourceKey === next.resourceKey
+})
+
+ResourceItem.displayName = 'ResourceItem'
+
+export const ResourceBar = memo(({ resources }: ResourceBarProps) => {
   const mainResources = ['gold', 'seeds', 'water', 'fertilizer', 'energy', 'research'] as const
   const animalResources = ['hay', 'milk', 'eggs', 'wool', 'leather', 'meat'] as const
   
@@ -61,77 +110,22 @@ export function ResourceBar({ resources }: ResourceBarProps) {
       <TooltipProvider>
         <div className="space-y-2">
           <div className="flex flex-wrap gap-x-6 gap-y-2 justify-start">
-            {mainResources.map((key) => {
-              const Icon = RESOURCE_ICONS[key]
-              const color = RESOURCE_COLORS[key]
-              const description = RESOURCE_DESCRIPTIONS[key]
-              const value = resources[key]
-              
-              const isLow = (key === 'fertilizer' || key === 'research') && value < 5
-              
-              return (
-                <Tooltip key={key} delayDuration={200}>
-                  <TooltipTrigger asChild>
-                    <div className={`flex items-center gap-2 cursor-help relative ${isLow ? 'animate-pulse' : ''}`}>
-                      <Icon className={`${color} w-4 h-4`} weight="fill" />
-                      <div className="flex flex-col">
-                        <span className="text-xs text-muted-foreground capitalize leading-tight">{key}</span>
-                        <span className={`text-base font-semibold font-numeric leading-tight ${isLow ? 'text-destructive' : ''}`}>
-                          {Math.floor(value)}
-                        </span>
-                      </div>
-                      {isLow && (
-                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
-                        </span>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-md">
-                    <p className="font-semibold capitalize mb-1 text-base">{key}</p>
-                    <p className="text-sm leading-relaxed">{description}</p>
-                    {isLow && (
-                      <p className="text-xs text-destructive font-bold mt-2 p-2 bg-destructive/10 rounded border border-destructive/20">
-                        ⚠️ LOW! Hover here for help getting more!
-                      </p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              )
-            })}
+            {mainResources.map((key) => (
+              <ResourceItem key={key} resourceKey={key} value={resources[key]} isMain />
+            ))}
           </div>
           
           <div className="border-t pt-2">
             <div className="flex flex-wrap gap-x-6 gap-y-2 justify-start">
-              {animalResources.map((key) => {
-                const Icon = RESOURCE_ICONS[key]
-                const color = RESOURCE_COLORS[key]
-                const description = RESOURCE_DESCRIPTIONS[key]
-                const value = resources[key]
-                
-                return (
-                  <Tooltip key={key} delayDuration={200}>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-2 cursor-help">
-                        <Icon className={`${color} w-4 h-4`} weight="fill" />
-                        <div className="flex flex-col">
-                          <span className="text-xs text-muted-foreground capitalize leading-tight">{key}</span>
-                          <span className="text-base font-semibold font-numeric leading-tight">{Math.floor(value)}</span>
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="font-semibold capitalize mb-1">{key}</p>
-                      <p className="text-sm">{description}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              })}
+              {animalResources.map((key) => (
+                <ResourceItem key={key} resourceKey={key} value={resources[key]} />
+              ))}
             </div>
           </div>
         </div>
       </TooltipProvider>
     </Card>
   )
-}
+})
+
+ResourceBar.displayName = 'ResourceBar'

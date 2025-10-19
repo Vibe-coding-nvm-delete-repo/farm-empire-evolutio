@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { canAfford, addResources, deductResources } from '../gameEngine'
 import { INITIAL_RESOURCES } from '../gameData'
 import type { Resources } from '../types'
@@ -160,5 +160,98 @@ describe('Integration Tests - Farm Economy', () => {
     
     resources = addResources(resources, doubleYield)
     expect(resources.gold).toBe(450)
+  })
+})
+
+describe('Performance Integration Tests', () => {
+  it('should handle 1000 resource operations efficiently', () => {
+    const start = performance.now()
+    let resources: Resources = { ...INITIAL_RESOURCES }
+    
+    for (let i = 0; i < 1000; i++) {
+      resources = addResources(resources, { gold: 10, seeds: 5 })
+      resources = deductResources(resources, { water: 2 })
+    }
+    
+    const end = performance.now()
+    expect(end - start).toBeLessThan(50)
+    expect(resources.gold).toBe(10150)
+    expect(resources.seeds).toBe(5020)
+    expect(resources.water).toBe(-1970)
+  })
+
+  it('should handle rapid canAfford checks', () => {
+    const start = performance.now()
+    const resources: Resources = { ...INITIAL_RESOURCES }
+    const cost = { gold: 50, seeds: 5 }
+    
+    for (let i = 0; i < 10000; i++) {
+      canAfford(resources, cost)
+    }
+    
+    const end = performance.now()
+    expect(end - start).toBeLessThan(50)
+  })
+
+  it('should maintain consistency under stress', () => {
+    let resources: Resources = { ...INITIAL_RESOURCES }
+    const operations = 5000
+    
+    for (let i = 0; i < operations; i++) {
+      if (i % 3 === 0) {
+        resources = addResources(resources, { gold: 5, seeds: 2 })
+      } else if (i % 3 === 1) {
+        resources = deductResources(resources, { gold: 2, seeds: 1 })
+      } else {
+        const cost = { gold: 1 }
+        if (canAfford(resources, cost)) {
+          resources = deductResources(resources, cost)
+        }
+      }
+    }
+    
+    expect(resources.gold).toBeGreaterThan(0)
+    expect(resources.seeds).toBeGreaterThan(0)
+  })
+})
+
+describe('Edge Cases and Error Handling', () => {
+  it('should handle undefined values gracefully', () => {
+    const resources: Resources = { ...INITIAL_RESOURCES }
+    const gain = { gold: undefined as any, seeds: 10 }
+    
+    const result = addResources(resources, gain)
+    expect(result.gold).toBe(150)
+    expect(result.seeds).toBe(30)
+  })
+
+  it('should handle empty cost objects', () => {
+    const resources: Resources = { ...INITIAL_RESOURCES }
+    const emptyCost = {}
+    
+    expect(canAfford(resources, emptyCost)).toBe(true)
+    const result = deductResources(resources, emptyCost)
+    expect(result).toEqual(resources)
+  })
+
+  it('should handle very large numbers', () => {
+    let resources: Resources = { 
+      ...INITIAL_RESOURCES, 
+      gold: 1000000000 
+    }
+    
+    const largeGain = { gold: 1000000000 }
+    resources = addResources(resources, largeGain)
+    
+    expect(resources.gold).toBe(2000000000)
+  })
+
+  it('should handle fractional resources correctly', () => {
+    const resources: Resources = { ...INITIAL_RESOURCES }
+    const fractionalGain = { gold: 10.7, seeds: 5.3 }
+    
+    const result = addResources(resources, fractionalGain)
+    expect(result.gold).toBe(160.7)
+    expect(result.seeds).toBe(25.3)
   })
 })

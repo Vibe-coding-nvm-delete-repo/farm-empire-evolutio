@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useGameState } from '@/hooks/useGameState'
+import { Resources } from '@/lib/types'
 import { ResourceBar } from '@/components/ResourceBar'
 import { FarmGrid } from '@/components/FarmGrid'
 import { QueuePanel } from '@/components/QueuePanel'
@@ -72,31 +73,37 @@ function App() {
         
         const now = Date.now()
         let hasChanges = false
-        let updated = { ...current }
         const modifiers = (applyTechEffects(current) as any)._modifiers
+        
+        let resourceChanges: Partial<Resources> = {}
+        let animalProductCount = 0
+        const plotUpdates: Map<string, any> = new Map()
 
-        const newPlots = updated.plots.map(plot => {
+        for (let i = 0; i < current.plots.length; i++) {
+          const plot = current.plots[i]
+          
           if (plot.type === 'building' && plot.buildingId) {
             const building = getBuildingById(plot.buildingId)
-            if (building && building.production && Object.keys(building.production).length > 0) {
+            if (building?.production && Object.keys(building.production).length > 0) {
               const lastProduction = (plot as any).lastProduction || now
               const elapsed = now - lastProduction
               
               if (elapsed >= building.productionRate) {
                 hasChanges = true
-                const productionAmount = building.production
-                let actualProduction = { ...productionAmount }
+                let actualProduction = building.production
                 
                 if (building.id === 'windmill' || building.id === 'solar_panel') {
-                  Object.keys(actualProduction).forEach(key => {
-                    if (key === 'energy') {
-                      actualProduction[key] = Math.floor((actualProduction[key] || 0) * (modifiers?.energyProductionMultiplier || 1))
-                    }
-                  })
+                  actualProduction = { ...actualProduction }
+                  if (actualProduction.energy) {
+                    actualProduction.energy = Math.floor(actualProduction.energy * (modifiers?.energyProductionMultiplier || 1))
+                  }
                 }
                 
-                updated.resources = addResources(updated.resources, actualProduction)
-                return { ...plot, lastProduction: now } as any
+                Object.entries(actualProduction).forEach(([key, value]) => {
+                  resourceChanges[key as keyof Resources] = (resourceChanges[key as keyof Resources] || 0) + (value || 0)
+                })
+                
+                plotUpdates.set(plot.id, { lastProduction: now })
               }
             }
           }
@@ -114,29 +121,42 @@ function App() {
               if (timeSinceProduction >= productionInterval && timeSinceFed < animal.feedInterval * 2) {
                 hasChanges = true
                 const production = calculateAnimalProduction(animal.production, modifiers)
-                updated.resources = addResources(updated.resources, production)
-                updated.totalAnimalProducts++
-                return { ...plot, lastProduction: now } as any
+                Object.entries(production).forEach(([key, value]) => {
+                  resourceChanges[key as keyof Resources] = (resourceChanges[key as keyof Resources] || 0) + (value || 0)
+                })
+                animalProductCount++
+                plotUpdates.set(plot.id, { ...(plotUpdates.get(plot.id) || {}), lastProduction: now })
               }
               
-              if (timeSinceFed >= animal.feedInterval && canAfford(updated.resources, animal.feedCost)) {
+              if (timeSinceFed >= animal.feedInterval && canAfford(current.resources, animal.feedCost)) {
                 hasChanges = true
-                updated.resources = deductResources(updated.resources, animal.feedCost)
-                return { ...plot, lastFed: now } as any
+                Object.entries(animal.feedCost).forEach(([key, value]) => {
+                  resourceChanges[key as keyof Resources] = (resourceChanges[key as keyof Resources] || 0) - (value || 0)
+                })
+                plotUpdates.set(plot.id, { ...(plotUpdates.get(plot.id) || {}), lastFed: now })
               }
             }
           }
-          
-          return plot
-        })
+        }
 
         if (!hasChanges) return current
 
-        updated.plots = newPlots
+        const newPlots = current.plots.map(plot => {
+          const updates = plotUpdates.get(plot.id)
+          return updates ? { ...plot, ...updates } : plot
+        })
+
+        let updated = {
+          ...current,
+          resources: addResources(current.resources, resourceChanges),
+          plots: newPlots,
+          totalAnimalProducts: current.totalAnimalProducts + animalProductCount
+        }
+        
         updated = checkAchievements(updated)
         return updated
       })
-    }, 100)
+    }, 250)
 
     return () => clearInterval(interval)
   }, [setGameState])
@@ -225,7 +245,7 @@ function App() {
 
   const modifiers = useMemo(() => {
     return (applyTechEffects(gameState) as any)._modifiers
-  }, [gameState.techs, gameState.prestigeMultiplier])
+  }, [gameState.techs.length, gameState.prestigeMultiplier])
 
   const handlePlotClick = useCallback((plotId: string, event: React.MouseEvent) => {
     const plot = gameState.plots.find(p => p.id === plotId)
@@ -557,10 +577,10 @@ function App() {
     setPlacementDialogOpen(true)
   }, [])
 
-  const unlockedCrops = useMemo(() => getUnlockedCrops(gameState.techs), [gameState.techs])
-  const unlockedAnimals = useMemo(() => getUnlockedAnimals(gameState.techs), [gameState.techs])
-  const unlockedBuildings = useMemo(() => getUnlockedBuildings(gameState.techs), [gameState.techs])
-  const availableTechs = useMemo(() => getAvailableTechs(gameState.techs), [gameState.techs])
+  const unlockedCrops = useMemo(() => getUnlockedCrops(gameState.techs), [gameState.techs.length])
+  const unlockedAnimals = useMemo(() => getUnlockedAnimals(gameState.techs), [gameState.techs.length])
+  const unlockedBuildings = useMemo(() => getUnlockedBuildings(gameState.techs), [gameState.techs.length])
+  const availableTechs = useMemo(() => getAvailableTechs(gameState.techs), [gameState.techs.length])
 
   const readyToHarvest = useMemo(() => 
     gameState.plots.filter(

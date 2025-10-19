@@ -251,13 +251,31 @@ export function processQueue(state: GameState): GameState {
   return newState
 }
 
+const achievementProgressCache = new Map<string, number>()
+let lastAchievementCheck = 0
+const ACHIEVEMENT_CHECK_THROTTLE = 1000
+
 export function checkAchievements(state: GameState): GameState {
+  const now = Date.now()
+  
+  if (now - lastAchievementCheck < ACHIEVEMENT_CHECK_THROTTLE) {
+    return state
+  }
+  
+  lastAchievementCheck = now
+  
   let newState = { ...state }
   let resourcesGained: Partial<Resources> = {}
   let newAchievements: string[] = []
+  
+  const achievedSet = new Set(newState.achievements)
+  let animalCount = -1
+  let buildingCount = -1
+  let uniqueCrops: Set<string> | null = null
+  let uniqueAnimals: Set<string> | null = null
 
-  ACHIEVEMENTS.forEach(achievement => {
-    if (newState.achievements.includes(achievement.id)) return
+  for (const achievement of ACHIEVEMENTS) {
+    if (achievedSet.has(achievement.id)) continue
 
     let currentProgress = 0
 
@@ -272,30 +290,39 @@ export function checkAchievements(state: GameState): GameState {
         currentProgress = newState.techs.length
         break
       case 'animals':
-        currentProgress = newState.plots.filter(p => p.type === 'animal').length
+        if (animalCount === -1) {
+          animalCount = newState.plots.filter(p => p.type === 'animal').length
+        }
+        currentProgress = animalCount
         break
       case 'production':
         currentProgress = newState.totalAnimalProducts
         break
       case 'automation':
-        currentProgress = newState.plots.filter(p => 
-          p.type === 'building' && p.buildingId && 
-          ['windmill', 'compost', 'seed_maker', 'auto_harvester', 'well', 'research_lab', 'solar_panel'].includes(p.buildingId)
-        ).length
+        if (buildingCount === -1) {
+          buildingCount = newState.plots.filter(p => 
+            p.type === 'building' && p.buildingId && 
+            ['windmill', 'compost', 'seed_maker', 'auto_harvester', 'well', 'research_lab', 'solar_panel'].includes(p.buildingId)
+          ).length
+        }
+        currentProgress = buildingCount
         break
       case 'special':
         if (achievement.id === 'diverse_farm') {
-          const uniqueCrops = new Set(
-            newState.plots.filter(p => p.cropId).map(p => p.cropId)
-          )
+          if (!uniqueCrops) {
+            uniqueCrops = new Set(newState.plots.filter(p => p.cropId).map(p => p.cropId!))
+          }
           currentProgress = uniqueCrops.size
         } else if (achievement.id === 'diverse_ranch') {
-          const uniqueAnimals = new Set(
-            newState.plots.filter(p => p.animalId).map(p => p.animalId)
-          )
+          if (!uniqueAnimals) {
+            uniqueAnimals = new Set(newState.plots.filter(p => p.animalId).map(p => p.animalId!))
+          }
           currentProgress = uniqueAnimals.size
         } else if (achievement.id === 'empire_builder') {
-          currentProgress = newState.plots.filter(p => p.type === 'building').length
+          if (buildingCount === -1) {
+            buildingCount = newState.plots.filter(p => p.type === 'building').length
+          }
+          currentProgress = buildingCount
         } else if (achievement.id.startsWith('lucky_')) {
           currentProgress = newState.criticalHarvestCount
         }
@@ -303,11 +330,12 @@ export function checkAchievements(state: GameState): GameState {
     }
 
     if (currentProgress >= achievement.requirement) {
-      newState.achievements.push(achievement.id)
+      newState.achievements = [...newState.achievements, achievement.id]
+      achievedSet.add(achievement.id)
       newAchievements.push(achievement.id)
       resourcesGained = addResources(resourcesGained as Resources, achievement.reward)
     }
-  })
+  }
 
   if (Object.keys(resourcesGained).length > 0) {
     newState.resources = addResources(newState.resources, resourcesGained)

@@ -285,10 +285,10 @@ describe('Performance Tests', () => {
     }
     
     const end = performance.now()
-    expect(end - start).toBeLessThan(100)
+    expect(end - start).toBeLessThan(50)
   })
 
-  it('should handle getUnlockedCrops efficiently', () => {
+  it('should handle getUnlockedCrops efficiently with memoization', () => {
     const start = performance.now()
     const techs = ['tech_root_crops', 'tech_tomatoes', 'tech_berries']
     
@@ -297,6 +297,93 @@ describe('Performance Tests', () => {
     }
     
     const end = performance.now()
+    expect(end - start).toBeLessThan(50)
+  })
+
+  it('should handle multiple resource operations efficiently', () => {
+    const start = performance.now()
+    let resources: Resources = { ...INITIAL_RESOURCES }
+    
+    for (let i = 0; i < 5000; i++) {
+      resources = addResources(resources, { gold: 10, seeds: 5 })
+      resources = deductResources(resources, { gold: 5, seeds: 2 })
+    }
+    
+    const end = performance.now()
     expect(end - start).toBeLessThan(100)
+  })
+
+  it('should memoize getCropById calls', () => {
+    const start = performance.now()
+    
+    for (let i = 0; i < 10000; i++) {
+      getCropById('wheat')
+      getCropById('corn')
+      getCropById('tomato')
+    }
+    
+    const end = performance.now()
+    expect(end - start).toBeLessThan(50)
+  })
+
+  it('should handle getAvailableTechs efficiently', () => {
+    const start = performance.now()
+    const techs = ['tech_root_crops', 'tech_tomatoes']
+    
+    for (let i = 0; i < 1000; i++) {
+      getAvailableTechs(techs)
+    }
+    
+    const end = performance.now()
+    expect(end - start).toBeLessThan(50)
+  })
+})
+
+describe('Edge Cases', () => {
+  it('should handle empty resources in canAfford', () => {
+    const resources: Resources = { ...INITIAL_RESOURCES }
+    const cost = {}
+    
+    expect(canAfford(resources, cost)).toBe(true)
+  })
+
+  it('should handle undefined values in resource operations', () => {
+    const resources: Resources = { ...INITIAL_RESOURCES, gold: 100 }
+    const gain = { gold: undefined, seeds: 10 }
+    
+    const result = addResources(resources, gain)
+    expect(result.gold).toBe(100)
+    expect(result.seeds).toBe(10)
+  })
+
+  it('should return valid crops even with empty tech array', () => {
+    const crops = getUnlockedCrops([])
+    expect(crops).toBeDefined()
+    expect(Array.isArray(crops)).toBe(true)
+  })
+
+  it('should handle zero values in calculations', () => {
+    const baseYield = { gold: 0, seeds: 10 }
+    const bonus = { multiplier: 2, isCritical: false }
+    
+    const result = applyHarvestBonus(baseYield, bonus)
+    expect(result.gold).toBe(0)
+    expect(result.seeds).toBe(20)
+  })
+
+  it('should handle very large multipliers', () => {
+    const baseTime = 10000
+    const modifiers = { growthMultiplier: 100 }
+    
+    const result = calculateGrowTime(baseTime, modifiers)
+    expect(result).toBe(100)
+  })
+
+  it('should ceil costs to prevent zero costs', () => {
+    const baseCost = { fertilizer: 1 }
+    const modifiers = { fertilizerEfficiency: 10 }
+    
+    const result = calculateCost(baseCost, modifiers)
+    expect(result.fertilizer).toBeGreaterThan(0)
   })
 })
