@@ -52,6 +52,7 @@ import { useKV } from '@github/spark/hooks'
 
 function App() {
   const [gameState, setGameState] = useGameState()
+  const { addNotification } = useNotifications()
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null)
   const [bulkPlantRowIndex, setBulkPlantRowIndex] = useState<number | null>(null)
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false)
@@ -64,7 +65,6 @@ function App() {
   const [harvestRoll, setHarvestRoll] = useState<{ rollValue: number, isCritical: boolean, position: { x: number, y: number } } | null>(null)
   const [unlockQueue, setUnlockQueue] = useState<Array<{ id: string, type: 'achievement' | 'tech' | 'progression', title: string, description: string, icon?: string }>>([])
   
-  const { addNotification } = useNotifications()
 
   useEffect(() => {
     const interval = setInterval(() => {
